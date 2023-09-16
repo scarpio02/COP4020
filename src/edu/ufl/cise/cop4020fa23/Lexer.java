@@ -23,7 +23,6 @@ public class Lexer implements ILexer {
 	private int startPos = 0;
 	private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS}
 	State state = State.START;
-
 	boolean validToken = true;
 
 
@@ -34,8 +33,14 @@ public class Lexer implements ILexer {
 	@Override
 	public IToken next() throws LexicalException {
 
+		char ch;
 		while (validToken) {
-			char ch = input.charAt(pos);
+			// FIXME: Is this how I handle EOF?
+			if (pos < input.length())
+				ch = input.charAt(pos);
+			else {
+				ch = 0;
+			}
 			switch (state) {
 				case START -> {
 					startPos = pos;  //save position of first char in token
@@ -43,14 +48,80 @@ public class Lexer implements ILexer {
 						case ' ', '\t', '\n', '\r' -> {pos++;}
 						case '+' -> { //handle all single char tokens like this
 							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.PLUS, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
 							pos++;
+							return token;
 						}
+						//FIXME: -> also exists
+//						case '-' -> { //handle all single char tokens like this
+//							// create token:kind = Kind.PLUS, position = startPos, length 1;
+//							Token token = new Token(Kind.MINUS, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+//							pos++;
+//							return token;
+//						}
+						case '/' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.DIV, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case '%' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.MOD, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case ',' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.COMMA, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case ';' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.SEMI, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case '?' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.QUESTION, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case '(' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.LPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case ')' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.RPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case '!' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.BANG, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+						case '^' -> { //handle all single char tokens like this
+							// create token:kind = Kind.PLUS, position = startPos, length 1;
+							Token token = new Token(Kind.RETURN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							pos++;
+							return token;
+						}
+
 						case '=' -> {
 							state = State.HAVE_EQ;
 							pos++;
 						}
 						case 0 -> {
 							//this is the end of the input, add an EOF token and return;
+							//FIXME: idk what this is supposed to do tbh
+							validToken = false;
 						}
 					}
 

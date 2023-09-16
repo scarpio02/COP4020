@@ -9,49 +9,7 @@
  */
 package edu.ufl.cise.cop4020fa23;
 
-import static edu.ufl.cise.cop4020fa23.Kind.AND;
-import static edu.ufl.cise.cop4020fa23.Kind.ASSIGN;
-import static edu.ufl.cise.cop4020fa23.Kind.BANG;
-import static edu.ufl.cise.cop4020fa23.Kind.BITAND;
-import static edu.ufl.cise.cop4020fa23.Kind.BLOCK_OPEN;
-import static edu.ufl.cise.cop4020fa23.Kind.BOOLEAN_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.BOX;
-import static edu.ufl.cise.cop4020fa23.Kind.COMMA;
-import static edu.ufl.cise.cop4020fa23.Kind.CONST;
-import static edu.ufl.cise.cop4020fa23.Kind.DIV;
-import static edu.ufl.cise.cop4020fa23.Kind.EOF;
-import static edu.ufl.cise.cop4020fa23.Kind.EQ;
-import static edu.ufl.cise.cop4020fa23.Kind.GT;
-import static edu.ufl.cise.cop4020fa23.Kind.IDENT;
-import static edu.ufl.cise.cop4020fa23.Kind.LE;
-import static edu.ufl.cise.cop4020fa23.Kind.LSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.LT;
-import static edu.ufl.cise.cop4020fa23.Kind.MINUS;
-import static edu.ufl.cise.cop4020fa23.Kind.MOD;
-import static edu.ufl.cise.cop4020fa23.Kind.NUM_LIT;
-import static edu.ufl.cise.cop4020fa23.Kind.PLUS;
-import static edu.ufl.cise.cop4020fa23.Kind.QUESTION;
-import static edu.ufl.cise.cop4020fa23.Kind.RARROW;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_blue;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_boolean;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_do;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_fi;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_green;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_height;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_if;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_image;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_int;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_nil;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_od;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_pixel;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_red;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_string;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_void;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_width;
-import static edu.ufl.cise.cop4020fa23.Kind.RES_write;
-import static edu.ufl.cise.cop4020fa23.Kind.RSQUARE;
-import static edu.ufl.cise.cop4020fa23.Kind.SEMI;
-import static edu.ufl.cise.cop4020fa23.Kind.STRING_LIT;
+import static edu.ufl.cise.cop4020fa23.Kind.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -217,7 +175,31 @@ class LexerTest {
 		ILexer lexer = ComponentFactory.makeLexer(input);
 		checkEOF(lexer.next());
 	}
-	
+
+	@Test
+	void testPLUS() throws LexicalException {
+		String input = "+";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(PLUS, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void testStrictSingleCharTokens() throws LexicalException {
+		String input = "+/%,;?()!^";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(PLUS, lexer.next());
+		checkToken(DIV, lexer.next());
+		checkToken(MOD, lexer.next());
+		checkToken(COMMA, lexer.next());
+		checkToken(SEMI, lexer.next());
+		checkToken(QUESTION, lexer.next());
+		checkToken(LPAREN, lexer.next());
+		checkToken(RPAREN, lexer.next());
+		checkToken(BANG, lexer.next());
+		checkToken(RETURN, lexer.next());
+		checkEOF(lexer.next());
+	}
 	@Test
 	void test1() throws LexicalException {
 	String input = ",[   ]%+";
