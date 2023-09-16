@@ -185,6 +185,24 @@ class LexerTest {
 	}
 
 	@Test
+	void testHAVE_MINUS() throws LexicalException {
+		String input = "->-";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(RARROW, lexer.next());
+		checkToken(MINUS, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void testHAVE_EQ() throws LexicalException {
+		String input = "= ==";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(ASSIGN, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
 	void testStrictSingleCharTokens() throws LexicalException {
 		String input = "+/%,;?()!^";
 		ILexer lexer = ComponentFactory.makeLexer(input);
@@ -198,6 +216,43 @@ class LexerTest {
 		checkToken(RPAREN, lexer.next());
 		checkToken(BANG, lexer.next());
 		checkToken(RETURN, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void testAllOpOrSep() throws LexicalException {
+		String input = ",;?:()<>[ ]= ==<=>=!& &&| ||+-* **/%<::>^->[]";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(COMMA, lexer.next());
+		checkToken(SEMI, lexer.next());
+		checkToken(QUESTION, lexer.next());
+		checkToken(COLON, lexer.next());
+		checkToken(LPAREN, lexer.next());
+		checkToken(RPAREN, lexer.next());
+		checkToken(LT, lexer.next());
+		checkToken(GT, lexer.next());
+		checkToken(LSQUARE, lexer.next());
+		checkToken(RSQUARE, lexer.next());
+		checkToken(ASSIGN, lexer.next());
+		checkToken(EQ, lexer.next());
+		checkToken(LE, lexer.next());
+		checkToken(GE, lexer.next());
+		checkToken(BANG, lexer.next());
+		checkToken(BITAND, lexer.next());
+		checkToken(AND, lexer.next());
+		checkToken(BITOR, lexer.next());
+		checkToken(OR, lexer.next());
+		checkToken(PLUS, lexer.next());
+		checkToken(MINUS, lexer.next());
+		checkToken(TIMES, lexer.next());
+		checkToken(EXP, lexer.next());
+		checkToken(DIV, lexer.next());
+		checkToken(MOD, lexer.next());
+		checkToken(BLOCK_OPEN, lexer.next());
+		checkToken(BLOCK_CLOSE, lexer.next());
+		checkToken(RETURN, lexer.next());
+		checkToken(RARROW, lexer.next());
+		checkToken(BOX, lexer.next());
 		checkEOF(lexer.next());
 	}
 	@Test
