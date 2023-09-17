@@ -255,6 +255,17 @@ class LexerTest {
 		checkToken(BOX, lexer.next());
 		checkEOF(lexer.next());
 	}
+
+	@Test
+	void testBOOL() throws LexicalException {
+		String input = "false FALSE";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(IDENT, lexer.next());
+		boolean b = false;
+		checkBooleanLit(false, lexer.next());
+		checkEOF(lexer.next());
+	}
+
 	@Test
 	void test1() throws LexicalException {
 	String input = ",[   ]%+";
