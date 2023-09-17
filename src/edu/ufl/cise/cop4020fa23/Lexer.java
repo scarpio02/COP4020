@@ -10,6 +10,7 @@
 package edu.ufl.cise.cop4020fa23;
 
 import static edu.ufl.cise.cop4020fa23.Kind.EOF;
+import static edu.ufl.cise.cop4020fa23.Kind.NUM_LIT;
 
 import edu.ufl.cise.cop4020fa23.exceptions.LexicalException;
 
@@ -21,8 +22,8 @@ public class Lexer implements ILexer {
 	private int currColumn = 1;
 	private int pos = 0;
 	private int startPos = 0;
-	private enum State {START, IN_IDENT, HAVE_ZERO, HAVE_DOT, IN_FLOAT, IN_NUM, HAVE_EQ, HAVE_MINUS, HAVE_AND, HAVE_OR,
-						HAVE_STAR, HAVE_LSQUARE, HAVE_LT, HAVE_GT, HAVE_COLON}
+	private enum State {START, IN_IDENT, IN_NUM,
+						HAVE_EQ, HAVE_MINUS, HAVE_AND, HAVE_OR, HAVE_STAR, HAVE_LSQUARE, HAVE_LT, HAVE_GT, HAVE_COLON}
 	State state = State.START;
 	boolean validToken = true;
 
@@ -45,142 +46,295 @@ public class Lexer implements ILexer {
 			switch (state) {
 				case START -> {
 					startPos = pos;  //save position of first char in token
-					switch (ch) {
-						case ' ', '\t', '\r' -> {
-							pos++;
-							currColumn++;
-						}
-						case '\n' -> {
-							pos++;
-							currLine++;
-							currColumn = 1;
-						}
-						case '+' -> { //handle all single char tokens like this
-							// create token:kind = Kind.PLUS, position = startPos, length 1;
-							Token token = new Token(Kind.PLUS, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '/' -> {
-							Token token = new Token(Kind.DIV, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '%' -> {
-							Token token = new Token(Kind.MOD, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case ',' -> {
-							Token token = new Token(Kind.COMMA, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case ';' -> {
-							Token token = new Token(Kind.SEMI, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '?' -> {
-							Token token = new Token(Kind.QUESTION, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '(' -> {
-							Token token = new Token(Kind.LPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case ')' -> {
-							Token token = new Token(Kind.RPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '!' -> {
-							Token token = new Token(Kind.BANG, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case '^' -> {
-							Token token = new Token(Kind.RETURN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
-						case ']' -> {
-							Token token = new Token(Kind.RSQUARE, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
-							pos++;
-							currColumn++;
-							return token;
-						}
 
-						case '-' -> {
-							state = State.HAVE_MINUS;
-							pos++;
-						}
-						case '=' -> {
-							state = State.HAVE_EQ;
-							pos++;
-						}
-						case '&' -> {
-							state = State.HAVE_AND;
-							pos++;
-						}
-						case '|' -> {
-							state = State.HAVE_OR;
-							pos++;
-						}
-						case '*' -> {
-							state = State.HAVE_STAR;
-							pos++;
-						}
-						case '[' -> {
-							state = State.HAVE_LSQUARE;
-							pos++;
-						}
-						case '<' -> {
-							state = State.HAVE_LT;
-							pos++;
-						}
-						case '>' -> {
-							state = State.HAVE_GT;
-							pos++;
-						}
-						case ':' -> {
-							state = State.HAVE_COLON;
-							pos++;
-						}
-						case 0 -> {
-							//this is the end of the input, add an EOF token and return;
-							//FIXME: idk if this is what I should do tbh
-							validToken = false;
+					// letters and identifiers
+					if ('A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z' || ch == '_') {
+						state = State.IN_IDENT;
+						pos++;
+					}
+					else {
+						switch (ch) {
+							// whitespace and newline
+							case ' ', '\t', '\r' -> {
+								pos++;
+								currColumn++;
+							}
+							case '\n' -> {
+								pos++;
+								currLine++;
+								currColumn = 1;
+							}
+							// op or separator
+							case '+' -> { //handle all single char tokens like this
+								// create token:kind = Kind.PLUS, position = startPos, length 1;
+								Token token = new Token(Kind.PLUS, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '/' -> {
+								Token token = new Token(Kind.DIV, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '%' -> {
+								Token token = new Token(Kind.MOD, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case ',' -> {
+								Token token = new Token(Kind.COMMA, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case ';' -> {
+								Token token = new Token(Kind.SEMI, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '?' -> {
+								Token token = new Token(Kind.QUESTION, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '(' -> {
+								Token token = new Token(Kind.LPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case ')' -> {
+								Token token = new Token(Kind.RPAREN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '!' -> {
+								Token token = new Token(Kind.BANG, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '^' -> {
+								Token token = new Token(Kind.RETURN, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case ']' -> {
+								Token token = new Token(Kind.RSQUARE, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '-' -> {
+								state = State.HAVE_MINUS;
+								pos++;
+							}
+							case '=' -> {
+								state = State.HAVE_EQ;
+								pos++;
+							}
+							case '&' -> {
+								state = State.HAVE_AND;
+								pos++;
+							}
+							case '|' -> {
+								state = State.HAVE_OR;
+								pos++;
+							}
+							case '*' -> {
+								state = State.HAVE_STAR;
+								pos++;
+							}
+							case '[' -> {
+								state = State.HAVE_LSQUARE;
+								pos++;
+							}
+							case '<' -> {
+								state = State.HAVE_LT;
+								pos++;
+							}
+							case '>' -> {
+								state = State.HAVE_GT;
+								pos++;
+							}
+							case ':' -> {
+								state = State.HAVE_COLON;
+								pos++;
+							}
+
+							// digit, nonzero_digit, num_lit,
+							case '0' -> {
+								Token token = new Token(Kind.NUM_LIT, startPos, 1, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								pos++;
+								currColumn++;
+								return token;
+							}
+							case '1', '2', '3', '4', '5', '6', '7', '8', '9' -> {
+								state = State.IN_NUM;
+								pos++;
+							}
+
+							case 0 -> {
+								//this is the end of the input, add an EOF token and return;
+								//FIXME: idk if this is what I should do tbh
+								validToken = false;
+							}
+							default -> {
+								throw new LexicalException("Invalid character: " + ch);
+							}
 						}
 					}
 
 				}
 				case IN_IDENT-> {
-					throw new UnsupportedOperationException("IN_IDENT not implemented");
-				}
-				case HAVE_ZERO -> {
-					throw new UnsupportedOperationException("HAVE_ZERO not implemented");
-				}
-				case HAVE_DOT -> {
-					throw new UnsupportedOperationException("HAVE_DOT not implemented");
-				}
-				case IN_FLOAT -> {
-					throw new UnsupportedOperationException("IN_FLOAT not implemented");
+					if ('A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z' || ch == '_' || '0' <= ch && ch <= '9') {
+						pos++;
+					}
+					else {
+						String identifier = input.substring(startPos, pos);
+						switch (identifier) {
+							case "Z", "BLACK", "BLUE", "CYAN", "DARK_GRAY", "GRAY", "GREEN", "LIGHT_GRAY",
+									"MAGENTA", "ORANGE", "PINK", "RED", "WHITE", "YELLOW" -> {
+								Token token = new Token(Kind.CONST, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "TRUE", "FALSE" -> {
+								Token token = new Token(Kind.BOOLEAN_LIT, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "image" -> {
+								Token token = new Token(Kind.RES_image, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "pixel" -> {
+								Token token = new Token(Kind.RES_pixel, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "int" -> {
+								Token token = new Token(Kind.RES_int, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "string" -> {
+								Token token = new Token(Kind.RES_string, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "void" -> {
+								Token token = new Token(Kind.RES_void, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "boolean" -> {
+								Token token = new Token(Kind.RES_boolean, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "write" -> {
+								Token token = new Token(Kind.RES_write, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "height" -> {
+								Token token = new Token(Kind.RES_height, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "width" -> {
+								Token token = new Token(Kind.RES_width, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "if" -> {
+								Token token = new Token(Kind.RES_if, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "fi" -> {
+								Token token = new Token(Kind.RES_fi, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "do" -> {
+								Token token = new Token(Kind.RES_do, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "od" -> {
+								Token token = new Token(Kind.RES_od, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "red" -> {
+								Token token = new Token(Kind.RES_red, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "green" -> {
+								Token token = new Token(Kind.RES_green, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							case "blue" -> {
+								Token token = new Token(Kind.RES_blue, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
+							}
+							default -> {
+
+							}
+						}
+					}
 				}
 				case IN_NUM -> {
-					throw new UnsupportedOperationException("IN_NUM not implemented");
+					switch (ch) {
+						case '0','1','2','3','4','5','6','7','8','9' -> {
+							pos++;  //still in number,
+							//increment pos to read next char
+						}
+						default -> {
+							try {
+								Integer.parseInt(input.substring(startPos, pos));
+							}
+							catch (Exception e){
+								throw new LexicalException(new SourceLocation(currLine, currColumn), "Invalid NUM_LIT");
+							}
+							Token token = new Token(Kind.NUM_LIT, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+							state = State.START;
+							currColumn += pos-startPos;
+							return token;
+						}
+
+					}
 				}
 				case HAVE_EQ -> {
 					switch (ch) {
