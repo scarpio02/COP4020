@@ -22,7 +22,7 @@ public class Lexer implements ILexer {
 	private int currColumn = 1;
 	private int pos = 0;
 	private int startPos = 0;
-	private enum State {START, IN_IDENT, IN_NUM, HAVE_POUND, IN_COMMENT,
+	private enum State {START, IN_IDENT, IN_NUM, HAVE_POUND, IN_COMMENT, IN_STRING,
 						HAVE_EQ, HAVE_MINUS, HAVE_AND, HAVE_OR, HAVE_STAR, HAVE_LSQUARE, HAVE_LT, HAVE_GT, HAVE_COLON}
 	private State state = State.START;
 	private boolean validToken = true;
@@ -50,7 +50,7 @@ public class Lexer implements ILexer {
 			switch (state) {
 				case START -> {
 					startPos = pos;  //save position of first char in token
-					// letters and identifiers
+					// letters, identifiers, constant, boolean, reserved
 					if ('A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z' || ch == '_') {
 						state = State.IN_IDENT;
 						pos++;
@@ -189,6 +189,12 @@ public class Lexer implements ILexer {
 								state = State.HAVE_POUND;
 								pos++;
 								currColumn++;
+							}
+
+							// string_lit
+							case '"' -> {
+								state = State.IN_STRING;
+								pos++;
 							}
 
 							case 0 -> {
@@ -347,6 +353,21 @@ public class Lexer implements ILexer {
 							return token;
 						}
 
+					}
+				}
+				case IN_STRING -> {
+					if (ch == '"') {
+						pos++;
+						Token token = new Token(Kind.STRING_LIT, startPos, pos-startPos, inputArr, new SourceLocation(currLine, currColumn));
+						state = State.START;
+						currColumn += pos-startPos;
+						return token;
+					}
+					else if (32 <= ch && ch <= 126) {
+						pos++;
+					}
+					else {
+						throw new LexicalException(new SourceLocation(currLine, currColumn), "Open string literal");
 					}
 				}
 				case IN_COMMENT -> {
