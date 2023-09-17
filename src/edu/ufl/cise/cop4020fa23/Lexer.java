@@ -46,7 +46,6 @@ public class Lexer implements ILexer {
 			switch (state) {
 				case START -> {
 					startPos = pos;  //save position of first char in token
-
 					// letters and identifiers
 					if ('A' <= ch && ch <= 'Z' || 'a' <= ch && ch <= 'z' || ch == '_') {
 						state = State.IN_IDENT;
@@ -310,7 +309,10 @@ public class Lexer implements ILexer {
 								return token;
 							}
 							default -> {
-
+								Token token = new Token(Kind.IDENT, startPos, pos-startPos, input.toCharArray(), new SourceLocation(currLine, currColumn));
+								state = State.START;
+								currColumn += pos-startPos;
+								return token;
 							}
 						}
 					}
