@@ -163,7 +163,36 @@ class LexerTest {
 		show(token);
 	}
 
-	
+	void checkString(String expectedStringValue, int expectedLine, int expectedColumn, IToken t) {
+		assertEquals(STRING_LIT, t.kind());
+		String s = t.text();
+		assertEquals('\"', s.charAt(0));  //check that first char is "
+		assertEquals('\"', s.charAt(s.length()-1));
+		assertEquals(expectedStringValue, s.substring(1, s.length() - 1));
+		SourceLocation loc = t.sourceLocation();
+		assertEquals(expectedLine, loc.line());
+		assertEquals(expectedColumn, loc.column());
+		;
+	}
+
+	void checkNumLit( String expectedNumlitText, int expectedLine, int expectedColumn, IToken t) {
+		assertEquals(NUM_LIT, t.kind());
+		assertEquals(expectedNumlitText, t.text());
+		SourceLocation loc = t.sourceLocation();
+		assertEquals(expectedLine, loc.line());
+		assertEquals(expectedColumn, loc.column());
+		;
+	}
+
+	void checkIdent( String expectedText, int expectedLine, int expectedColumn, IToken t) {
+		assertEquals(IDENT, t.kind());
+		assertEquals(expectedText, t.text());
+		SourceLocation loc = t.sourceLocation();
+		assertEquals(expectedLine, loc.line());
+		assertEquals(expectedColumn, loc.column());
+		;
+	}
+
 	/**
 	 * Empty input is OK, should add EOF token
 	 * 
@@ -927,5 +956,303 @@ class LexerTest {
 		LexicalException e = assertThrows(LexicalException.class, () -> lexer.next());
 		show("Error message from unitTestInvalidInteger: " + e.getMessage());
 	}
+
+	@Test
+	void test0New() throws LexicalException {
+		String input = "";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test1New() throws LexicalException {
+		String input = ",[   ]%+";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(COMMA,",",1,1, lexer.next());
+		checkToken(LSQUARE,"[",1,2, lexer.next());
+		checkToken(RSQUARE,"]",1,6, lexer.next());
+		checkToken(MOD,"%",1,7, lexer.next());
+		checkToken(PLUS,"+",1,8, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test1aNew() throws LexicalException {
+		String input = ",[]%+";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(COMMA,",",1,1, lexer.next());
+		checkToken(BOX,"[]",1,2, lexer.next());
+		checkToken(MOD,"%",1,4, lexer.next());
+		checkToken(PLUS,"+",1,5, lexer.next());
+	}
+
+	@Test
+	void test4New() throws LexicalException {
+		String input = """
+          , [ ]
+      ##{ }.
+      % + /
+      ? !;
+      """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(COMMA,",",1,5,lexer.next());
+		checkToken(LSQUARE,"[",1,7,lexer.next());
+		checkToken(RSQUARE,"]",1,9,lexer.next());
+		checkToken(MOD, "%",3,1, lexer.next());
+		checkToken(PLUS,"+",3,3, lexer.next());
+		checkToken(DIV,"/",3,5, lexer.next());
+		checkToken(QUESTION,"?",4,1, lexer.next());
+		checkToken(BANG,"!",4,3, lexer.next());
+		checkToken(SEMI, ";",4,4, lexer.next());
+		checkEOF(lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test5New() throws LexicalException {
+		String input = """
+            & &&
+            &&& &&&&
+            """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(BITAND, "&", 1,1, lexer.next());
+		checkToken(AND, "&&", 1,3, lexer.next());
+		checkToken(AND, "&&", 2,1, lexer.next());
+		checkToken(BITAND, "&", 2,3, lexer.next());
+		checkToken(AND, "&&", 2, 5, lexer.next());
+		checkToken(AND, "&&", 2, 7, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test6New() throws LexicalException {
+		String input = """
+            << <= <: <<: <,
+            """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(LT,"<", 1,1, lexer.next());
+		checkToken(LT,"<", 1,2, lexer.next());
+		checkToken(LE,"<=", 1,4, lexer.next());
+		checkToken(BLOCK_OPEN,"<:", 1,7, lexer.next());
+		checkToken(LT,"<", 1,10, lexer.next());
+		checkToken(BLOCK_OPEN,"<:", 1,11, lexer.next());
+		checkToken(LT,"<", 1,14,lexer.next());
+		checkToken(COMMA,",", 1,15,lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test7New() throws LexicalException {
+		String input = """
+            +== = == ===
+            ====-> - > ->>
+            """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(PLUS,"+", 1,1, lexer.next());
+		checkToken(EQ,"==", 1,2, lexer.next());
+		checkToken(ASSIGN,"=", 1,5, lexer.next());
+		checkToken(EQ,"==", 1,7, lexer.next());
+		checkToken(EQ,"==", 1,10, lexer.next());
+		checkToken(ASSIGN,"=", 1,12, lexer.next());
+		checkToken(EQ,"==", 2,1, lexer.next());
+		checkToken(EQ,"==", 2,3, lexer.next());
+		checkToken(RARROW,"->", 2,5, lexer.next());
+		checkToken(MINUS,"-", 2,8, lexer.next());
+		checkToken(GT,">", 2,10, lexer.next());
+		checkToken(RARROW,"->", 2,12, lexer.next());
+		checkToken(GT,">", 2,14, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test8New() throws LexicalException {
+		String input = """
+            a+b
+            ccc def
+            BLACK
+            """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(IDENT,"a",1,1, lexer.next());
+		checkToken(PLUS,"+",1,2, lexer.next());
+		checkToken(IDENT,"b",1,3,  lexer.next());
+		checkToken(IDENT,"ccc",2,1,  lexer.next());
+		checkToken(IDENT,"def",2,5,  lexer.next());
+		checkToken(CONST,"BLACK",3,1, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test8aNew() throws LexicalException {
+		String input = """
+            a
+            ccc
+            RED
+            """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(IDENT,"a",1,1,lexer.next());
+		checkToken(IDENT,"ccc",2,1, lexer.next());
+		checkToken(CONST,"RED",3,1, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+
+	@Test
+	void test10New() throws LexicalException {
+		String input = """
+             01 010
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkNumLit("0",1,1,lexer.next());
+		checkNumLit("1",1,2,lexer.next());
+		checkNumLit("0",1,4,lexer.next());
+		checkNumLit("10",1,5,lexer.next());
+	}
+
+
+	/**
+	 * This test shows how to write a test that will pass only if a LexicalExcption is thrown.
+	 * In this case, the number 9999999999999999999999999999999999999999 is too big.
+	 *
+	 * Note that correct tokens before the token with the error should be returned normally.
+	 *
+	 * @throws LexicalException
+	 */
+	@Test
+	void test11New() throws LexicalException {
+		String input = """
+             23 9999999999999999999999999999999999999999
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkNumLit("23",1,1,lexer.next());
+		assertThrows(LexicalException.class, () -> {
+			lexer.next();
+		});
+	}
+
+	@Test
+	void test12New() throws LexicalException {
+		String input = """
+             "hello"
+             "abc"
+             "abcde@#$%"
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkString("hello",1,1, lexer.next());
+		checkString("abc",2,1, lexer.next());
+		checkString("abcde@#$%",3,1, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test13New() throws LexicalException {
+		String input = "\n\r\n";
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkEOF(lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test14New() throws LexicalException {
+		String input = """
+             abc ##hello there !@#$#%;
+             123
+             abc123
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkIdent("abc",1,1, lexer.next());
+		checkNumLit("123",2,1, lexer.next());
+		checkIdent("abc123",3,1, lexer.next());
+		checkEOF(lexer.next());
+	}
+
+	@Test
+	void test15New() throws LexicalException {
+		String input = """
+             abc123+123abc##1233435
+             "abc123+123abc##1233435"
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkIdent("abc123",1,1,lexer.next());
+		checkToken(PLUS, lexer.next());
+		checkNumLit("123",1,8, lexer.next());
+		checkIdent("abc",1,11, lexer.next());
+		checkString("abc123+123abc##1233435",2,1, lexer.next());
+		checkEOF(lexer.next());
+		checkEOF(lexer.next());
+
+	}
+
+
+	@Test
+	void test16New() throws LexicalException {
+		String input = """
+             a[b,c]
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkIdent("a",1,1,lexer.next());
+		checkToken(LSQUARE,"[",1,2,lexer.next());
+		checkIdent("b",1,3,lexer.next());
+		checkToken(COMMA,",",1,4,lexer.next());
+		checkIdent("c",1,5,lexer.next());
+		checkToken(RSQUARE,"]",1,6,lexer.next());
+	}
+	//throws exception
+	@Test
+	void test17New() throws Exception {
+		String input = """
+             555 #
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkNumLit("555",1,1,lexer.next());
+		LexicalException e = assertThrows(LexicalException.class, () -> {
+			lexer.next();
+		});
+		show("Error message from test17: " + e.getMessage());
+	}
+
+	//throws exception
+	@Test
+	void test18New() throws Exception {
+		String input = """
+             555 @
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkNumLit("555",1,1,lexer.next());
+		LexicalException e = assertThrows(LexicalException.class, () -> {
+			lexer.next();
+		});
+		show("Error message from test18: " + e.getMessage());
+	}
+
+	//throws exception
+	@Test
+	void test19New() throws Exception {
+		String input = """
+             "@"
+             ## @ is legal in a comment
+             @
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkString("@",1,1,lexer.next());
+		LexicalException e = assertThrows(LexicalException.class, () -> {
+			lexer.next();
+		});
+		show("Error message from test19: " + e.getMessage());
+	}
+
+	@Test
+	void test20New() throws Exception {
+		String input = """
+             FALSE TRUE
+             True false true
+             """;
+		ILexer lexer = ComponentFactory.makeLexer(input);
+		checkToken(BOOLEAN_LIT, "FALSE",1,1, lexer.next());
+		checkToken(BOOLEAN_LIT, "TRUE",1,7, lexer.next());
+		checkIdent("True",2,1,lexer.next());
+		checkIdent("false",2,6,lexer.next());
+		checkIdent("true",2,12,lexer.next());
+	}
+
 
 }
