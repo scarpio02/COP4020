@@ -94,21 +94,109 @@ public class ExpressionParser implements IParser {
 		t = lexer.next();
 	}
 
-	//FIXME: how to determine if after PrimaryExpr comes the PixelSelector or an ExpandedPixelExpr!!!!!!!!
+
+
+	//ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr
+	//LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
+	//LogicalAndExpr ::=  ComparisonExpr ( (   &   |  &&   )  ComparisonExpr)*
+	//ComparisonExpr ::= PowExpr ( (< | > | == | <= | >=) PowExpr)*
+
+	// PowExpr ::= AdditiveExpr ** PowExpr |   AdditiveExpr
+	// PowExpr ::= AdditiveExpr (** AdditiveExpr)*
+	Expr PowExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = AdditiveExpr();
+		while (t.kind() == EXP) {
+			op = t;
+			consume();
+			right = AdditiveExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	//AdditiveExpr ::= MultiplicativeExpr ( ( + | -  ) MultiplicativeExpr )*
+	Expr AdditiveExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = MultiplicativeExpr();
+		while (t.kind() == PLUS || t.kind() == MINUS) {
+			op = t;
+			consume();
+			right = MultiplicativeExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	// MultiplicativeExpr ::= UnaryExpr (( * |  /  |  % ) UnaryExpr)*
+	Expr MultiplicativeExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = UnaryExpr();
+		while (t.kind() == TIMES || t.kind() == DIV || t.kind() == MOD) {
+			op = t;
+			consume();
+			right = UnaryExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	// FIXME: IDK if this is correct. How should I return multiple ops and then the postfix???????
+	// FIXME: LL(1)???
+	// UnaryExpr ::=  ( ! | - | length | width) UnaryExpr  |  PostfixExpr
+	// UnaryExpr ::=  ( ! | - | width | height)* PostfixExpr
+	Expr UnaryExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr e = null;
+		if (t.kind() == BANG || t.kind() == MINUS || t.kind() == RES_width || t.kind() == RES_height) {
+			op = t;
+			consume();
+			e = UnaryExpr();
+			e = new UnaryExpr(firstToken, op, e);
+		}
+		else {
+			e = PostfixExpr();
+		}
+		return e;
+	}
+
+	//FIXME: how do I determine if after PrimaryExpr comes a PixelSelector or an ExpandedPixelExpr??????
+	//FIXME: "A PostfixExpr could have both a PixelSelector and a ChannelSelector, but if neither of
+	// those things is there, it will be some other type of Expr" ????????????????????????
+
 	// PostfixExpr::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
 	Expr PostfixExpr() throws PLCCompilerException {
 		IToken firstToken = t;
+		Expr pe = null;
 		Expr e = null;
 		PixelSelector ps = null;
 		ChannelSelector cs = null;
-		e = PrimaryExpr();
+		pe = PrimaryExpr();
+
 		if (t.kind() == LSQUARE) {
 			ps = PixelSelector();
+			e = new PostfixExpr(firstToken, pe, ps, cs);
 		}
 		if (t.kind() == COLON) {
 			cs = ChannelSelector();
+			e = new PostfixExpr(firstToken, pe, ps, cs);
 		}
-		return e = new PostfixExpr(firstToken, e, ps, cs);
+		if (e != null) {
+			return e;
+		}
+		else {
+			return pe;
+		}
 	}
 
 	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixelExpr
@@ -178,7 +266,6 @@ public class ExpressionParser implements IParser {
 		return new PixelSelector(firstToken, xExpr, yExpr);
 	}
 
-	//FIXME: ExpandedPixelExpr AST has errors in params!!!!!!!!!!!
 	// ExpandedPixelExpr ::= [ Expr , Expr , Expr ]
 	Expr ExpandedPixelExpr() throws PLCCompilerException {
 		IToken firstToken = t;
