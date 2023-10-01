@@ -32,8 +32,8 @@ import edu.ufl.cise.cop4020fa23.exceptions.SyntaxException;
 import static edu.ufl.cise.cop4020fa23.Kind.*;
 
 /**
-Expr::=  ConditionalExpr | LogicalOrExpr    
-ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr 
+Expr::=  ConditionalExpr | LogicalOrExpr
+ConditionalExpr ::=  ?  Expr  ->  Expr  ,  Expr
 LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
 LogicalAndExpr ::=  ComparisonExpr ( (   &   |  &&   )  ComparisonExpr)*
 ComparisonExpr ::= PowExpr ( (< | > | == | <= | >=) PowExpr)*
@@ -75,11 +75,17 @@ public class ExpressionParser implements IParser {
 		return e;
 	}
 
-
+	// Expr ::=  ConditionalExpr | LogicalOrExpr
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
-		return PrimaryExpr();
-		//throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
+		Expr e = null;
+		if (firstToken.kind() == QUESTION) {
+			e = ConditionalExpr();
+		}
+		else {
+			e = LogicalOrExpr();
+		}
+		return e;
 	}
 
 	void match(Kind k) throws LexicalException, SyntaxException {
@@ -96,8 +102,21 @@ public class ExpressionParser implements IParser {
 
 
 
-	//ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr
+	//ConditionalExpr ::=  ?  Expr  ->  Expr  ,  Expr
+	Expr ConditionalExpr () throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr guard = null;
+		Expr trueE = null;
+		Expr falseE = null;
+		match(QUESTION);
+		guard = expr();
+		match(RARROW);
+		trueE = expr();
+		match(COMMA);
+		falseE = expr();
+		return guard = new ConditionalExpr(firstToken, guard, trueE, falseE);
 
+	}
 
 	//LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
 	Expr LogicalOrExpr() throws PLCCompilerException {
