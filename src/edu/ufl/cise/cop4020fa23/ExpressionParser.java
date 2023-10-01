@@ -97,9 +97,55 @@ public class ExpressionParser implements IParser {
 
 
 	//ConditionalExpr ::=  ?  Expr  :  Expr  :  Expr
+
+
 	//LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
+	Expr LogicalOrExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = LogicalAndExpr();
+		while (t.kind() == BITOR|| t.kind() == OR) {
+			op = t;
+			consume();
+			right = LogicalAndExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
 	//LogicalAndExpr ::=  ComparisonExpr ( (   &   |  &&   )  ComparisonExpr)*
+	Expr LogicalAndExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = ComparisonExpr();
+		while (t.kind() == BITAND|| t.kind() == AND) {
+			op = t;
+			consume();
+			right = ComparisonExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
 	//ComparisonExpr ::= PowExpr ( (< | > | == | <= | >=) PowExpr)*
+	Expr ComparisonExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = PowExpr();
+		while (t.kind() == LT || t.kind() == GT || t.kind() == EQ || t.kind() == LE || t.kind() == GE) {
+			op = t;
+			consume();
+			right = PowExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
 
 	// PowExpr ::= AdditiveExpr ** PowExpr |   AdditiveExpr
 	// PowExpr ::= AdditiveExpr (** AdditiveExpr)*
