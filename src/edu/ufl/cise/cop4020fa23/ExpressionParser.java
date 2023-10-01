@@ -94,6 +94,23 @@ public class ExpressionParser implements IParser {
 		t = lexer.next();
 	}
 
+	//FIXME: how to determine if after PrimaryExpr comes the PixelSelector or an ExpandedPixelExpr!!!!!!!!
+	// PostfixExpr::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
+	Expr PostfixExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr e = null;
+		PixelSelector ps = null;
+		ChannelSelector cs = null;
+		e = PrimaryExpr();
+		if (t.kind() == LSQUARE) {
+			ps = PixelSelector();
+		}
+		if (t.kind() == COLON) {
+			cs = ChannelSelector();
+		}
+		return e = new PostfixExpr(firstToken, e, ps, cs);
+	}
+
 	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixelExpr
     Expr PrimaryExpr() throws PLCCompilerException {
 		IToken firstToken = t;
@@ -161,7 +178,7 @@ public class ExpressionParser implements IParser {
 		return new PixelSelector(firstToken, xExpr, yExpr);
 	}
 
-	//FIXME: ExpandedPixelExpr AST has errors in params!
+	//FIXME: ExpandedPixelExpr AST has errors in params!!!!!!!!!!!
 	// ExpandedPixelExpr ::= [ Expr , Expr , Expr ]
 	Expr ExpandedPixelExpr() throws PLCCompilerException {
 		IToken firstToken = t;
