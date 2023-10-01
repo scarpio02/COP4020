@@ -45,6 +45,7 @@ UnaryExprPostfix::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
 PrimaryExpr ::=STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | Z
     ExpandedPixel  
 ChannelSelector ::= : red | : green | : blue                           ***** NOT LL(1)!!!!!!!!! *****
+ -> ChannelSelector ::= : (red | green | blue)
 PixelSelector  ::= [ Expr , Expr ]
 ExpandedPixel ::= [ Expr , Expr , Expr ]
 Dimension  ::=  [ Expr , Expr ]                         
@@ -93,7 +94,7 @@ public class ExpressionParser implements IParser {
 		t = lexer.next();
 	}
 
-	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixel
+	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixelExpr
     Expr PrimaryExpr() throws PLCCompilerException {
 		IToken firstToken = t;
 		Expr e = null;
@@ -123,18 +124,46 @@ public class ExpressionParser implements IParser {
 			match(RPAREN);
 		}
 		else if (firstToken.kind() == LSQUARE) {
-			e = ExpandedPixel();
+			e = ExpandedPixelExpr();
 		}
 
 		else {
 			throw new SyntaxException("Error: expecting string literal, num literal, boolean literal, identifier, " +
-					"( ), constant, or expanded pixel ");
+					"( ), constant, or expanded pixel");
 		}
         return e;
     }
 
-	// ExpandedPixel ::= [ Expr , Expr , Expr ]
-	Expr ExpandedPixel() throws PLCCompilerException {
+	// ChannelSelector ::= : (red | green | blue)
+	ChannelSelector ChannelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		match(COLON);
+		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
+			IToken color = t;
+			consume();
+			return new ChannelSelector(firstToken, t);
+		}
+		else {
+			throw new SyntaxException("Error: expecting reserved red, green, or blue token");
+		}
+	}
+
+	//PixelSelector  ::= [ Expr , Expr ]
+	PixelSelector PixelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr xExpr = null;
+		Expr yExpr = null;
+		match(LSQUARE);
+		xExpr = expr();
+		match(COMMA);
+		yExpr = expr();
+		match(RSQUARE);
+		return new PixelSelector(firstToken, xExpr, yExpr);
+	}
+
+	//FIXME: ExpandedPixelExpr AST has errors in params!
+	// ExpandedPixelExpr ::= [ Expr , Expr , Expr ]
+	Expr ExpandedPixelExpr() throws PLCCompilerException {
 		IToken firstToken = t;
 		Expr red = null;
 		Expr green = null;
