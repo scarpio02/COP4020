@@ -74,9 +74,9 @@ AdditiveExpr ::= MultiplicativeExpr ( ( + | -  ) MultiplicativeExpr )*
 MultiplicativeExpr ::= UnaryExpr (( * |  /  |  % ) UnaryExpr)*
 UnaryExpr ::=  ( ! | - | length | width) UnaryExpr  |  UnaryExprPostfix
 UnaryExprPostfix::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
-PrimaryExpr ::=STRING_LIT | NUM_LIT |  IDENT | ( Expr ) | Z 
+PrimaryExpr ::=STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | Z
     ExpandedPixel  
-ChannelSelector ::= : red | : green | : blue
+ChannelSelector ::= : red | : green | : blue                           ***** NOT LL(1)!!!!!!!!! *****
 PixelSelector  ::= [ Expr , Expr ]
 ExpandedPixel ::= [ Expr , Expr , Expr ]
 Dimension  ::=  [ Expr , Expr ]                         
@@ -109,9 +109,35 @@ public class ExpressionParser implements IParser {
 
 	private Expr expr() throws PLCCompilerException {
 		IToken firstToken = t;
-		throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
+		return PrimaryExpression();
+		//throw new UnsupportedOperationException("THE PARSER HAS NOT BEEN IMPLEMENTED YET");
 	}
 
-    
+	void match(Kind k) throws LexicalException, SyntaxException {
+		if (t.kind() == k) {
+			t = lexer.next();
+		}
+		else {
+			throw new SyntaxException("Error: Expecting token of kind: " + k.toString());
+		}
+	}
+	void consume() throws LexicalException {
+		t = lexer.next();
+	}
+	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixel
+    Expr PrimaryExpression() throws SyntaxException, LexicalException {
+		IToken firstToken = t;
+		Expr e = null;
+		if (firstToken.kind() == STRING_LIT) {
+			consume();
+			e = new StringLitExpr(firstToken);
+		}
+
+		else {
+			throw new SyntaxException("Error: expecting string literal, num literal, boolean literal, identifier, " +
+					"( ), constant, or expanded pixel ");
+		}
+        return e;
+    }
 
 }

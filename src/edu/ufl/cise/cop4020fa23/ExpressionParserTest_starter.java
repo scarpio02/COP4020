@@ -62,7 +62,7 @@ class ExpressionParserTest_starter {
 	 * Returns the given AST cast to StringLitExpr.
 	 *
 	 * @param e
-	 * @param nameToken
+	 * @param value
 	 * @return
 	 */
 	StringLitExpr checkStringLitExpr(AST e, String value) {
@@ -120,7 +120,7 @@ class ExpressionParserTest_starter {
 	 * Returns the given AST cast to BinaryExpr.
 	 *
 	 * @param e
-	 * @param op Kind of expected operator
+	 * @param expectedOp Kind of expected operator
 	 * @return
 	 */
 	BinaryExpr checkBinaryExpr(AST e, Kind expectedOp) {
