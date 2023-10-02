@@ -311,7 +311,7 @@ public class ExpressionParser implements IParser {
 		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
 			IToken color = t;
 			consume();
-			return new ChannelSelector(firstToken, t);
+			return new ChannelSelector(firstToken, color);
 		}
 		else {
 			throw new SyntaxException("Error: expecting reserved red, green, or blue token");
