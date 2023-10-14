@@ -167,7 +167,6 @@ public class ExpressionParser implements IParser {
 	}
 
 	// PowExpr ::= AdditiveExpr ** PowExpr |   AdditiveExpr
-	// PowExpr ::= AdditiveExpr (** AdditiveExpr)*
 	Expr PowExpr() throws PLCCompilerException {
 		IToken firstToken = t;
 		IToken op = null;
@@ -177,7 +176,7 @@ public class ExpressionParser implements IParser {
 		while (t.kind() == EXP) {
 			op = t;
 			consume();
-			right = AdditiveExpr();
+			right = PowExpr();
 			left = new BinaryExpr(firstToken, left, op, right);
 		}
 		return left;
