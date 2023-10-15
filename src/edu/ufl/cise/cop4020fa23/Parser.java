@@ -28,6 +28,7 @@ public class Parser implements IParser {
 	public Parser(ILexer lexer) throws LexicalException {
 		super();
 		this.lexer = lexer;
+		t = lexer.next();
 	}
 
 
@@ -41,6 +42,388 @@ public class Parser implements IParser {
 		throw new UnsupportedOperationException();
 	}
 
+	private Block Block() {
 
+	}
+
+
+
+	// Expr ::=  ConditionalExpr | LogicalOrExpr
+	private Expr expr() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr e = null;
+		if (firstToken.kind() == QUESTION) {
+			e = ConditionalExpr();
+		}
+		else {
+			e = LogicalOrExpr();
+		}
+		return e;
+	}
+
+	private void match(Kind k) throws LexicalException, SyntaxException {
+		if (t.kind() == k) {
+			t = lexer.next();
+		}
+		else {
+			throw new SyntaxException("Error: Expecting token of kind: " + k.toString());
+		}
+	}
+	private void consume() throws LexicalException {
+		t = lexer.next();
+	}
+
+
+
+	//ConditionalExpr ::=  ?  Expr  ->  Expr  ,  Expr
+	private Expr ConditionalExpr () throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr guard = null;
+		Expr trueE = null;
+		Expr falseE = null;
+		match(QUESTION);
+		guard = expr();
+		match(RARROW);
+		trueE = expr();
+		match(COMMA);
+		falseE = expr();
+		return guard = new ConditionalExpr(firstToken, guard, trueE, falseE);
+
+	}
+
+	//LogicalOrExpr ::= LogicalAndExpr (    (   |   |   ||   ) LogicalAndExpr)*
+	private Expr LogicalOrExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = LogicalAndExpr();
+		while (t.kind() == BITOR|| t.kind() == OR) {
+			op = t;
+			consume();
+			right = LogicalAndExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	//LogicalAndExpr ::=  ComparisonExpr ( (   &   |  &&   )  ComparisonExpr)*
+	private Expr LogicalAndExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = ComparisonExpr();
+		while (t.kind() == BITAND|| t.kind() == AND) {
+			op = t;
+			consume();
+			right = ComparisonExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	//ComparisonExpr ::= PowExpr ( (< | > | == | <= | >=) PowExpr)*
+	private Expr ComparisonExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = PowExpr();
+		while (t.kind() == LT || t.kind() == GT || t.kind() == EQ || t.kind() == LE || t.kind() == GE) {
+			op = t;
+			consume();
+			right = PowExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	// PowExpr ::= AdditiveExpr ** PowExpr |   AdditiveExpr
+	private Expr PowExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = AdditiveExpr();
+		while (t.kind() == EXP) {
+			op = t;
+			consume();
+			right = PowExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	//AdditiveExpr ::= MultiplicativeExpr ( ( + | -  ) MultiplicativeExpr )*
+	private Expr AdditiveExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = MultiplicativeExpr();
+		while (t.kind() == PLUS || t.kind() == MINUS) {
+			op = t;
+			consume();
+			right = MultiplicativeExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	// MultiplicativeExpr ::= UnaryExpr (( * |  /  |  % ) UnaryExpr)*
+	private Expr MultiplicativeExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr left = null;
+		Expr right = null;
+		left = UnaryExpr();
+		while (t.kind() == TIMES || t.kind() == DIV || t.kind() == MOD) {
+			op = t;
+			consume();
+			right = UnaryExpr();
+			left = new BinaryExpr(firstToken, left, op, right);
+		}
+		return left;
+	}
+
+	// FIXME: IDK if this is correct. How should I return multiple ops and then the postfix???????
+	// FIXME: LL(1)???
+	// UnaryExpr ::=  ( ! | - | length | width) UnaryExpr  |  PostfixExpr
+	// UnaryExpr ::=  ( ! | - | width | height)* PostfixExpr
+	private Expr UnaryExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken op = null;
+		Expr e = null;
+		if (t.kind() == BANG || t.kind() == MINUS || t.kind() == RES_width || t.kind() == RES_height) {
+			op = t;
+			consume();
+			e = UnaryExpr();
+			e = new UnaryExpr(firstToken, op, e);
+		}
+		else {
+			e = PostfixExpr();
+		}
+		return e;
+	}
+
+	//FIXME: how do I determine if after PrimaryExpr comes a PixelSelector or an ExpandedPixelExpr??????
+	//FIXME: "A PostfixExpr could have both a PixelSelector and a ChannelSelector, but if neither of
+	// those things is there, it will be some other type of Expr" ????????????????????????
+
+	// PostfixExpr::= PrimaryExpr (PixelSelector | ε ) (ChannelSelector | ε )
+	private Expr PostfixExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr pe = null;
+		Expr e = null;
+		PixelSelector ps = null;
+		ChannelSelector cs = null;
+		pe = PrimaryExpr();
+
+		if (t.kind() == LSQUARE) {
+			ps = PixelSelector();
+			e = new PostfixExpr(firstToken, pe, ps, cs);
+		}
+		if (t.kind() == COLON) {
+			cs = ChannelSelector();
+			e = new PostfixExpr(firstToken, pe, ps, cs);
+		}
+		if (e != null) {
+			return e;
+		}
+		else {
+			return pe;
+		}
+	}
+
+	// PrimaryExpr ::= STRING_LIT | NUM_LIT | BOOLEAN_LIT | IDENT | ( Expr ) | CONST | ExpandedPixelExpr
+	private Expr PrimaryExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr e = null;
+		if (firstToken.kind() == STRING_LIT) {
+			consume();
+			e = new StringLitExpr(firstToken);
+		}
+		else if (firstToken.kind() == NUM_LIT) {
+			consume();
+			e = new NumLitExpr(firstToken);
+		}
+		else if (firstToken.kind() == BOOLEAN_LIT) {
+			consume();
+			e = new BooleanLitExpr(firstToken);
+		}
+		else if (firstToken.kind() == IDENT) {
+			consume();
+			e = new IdentExpr(firstToken);
+		}
+		else if (firstToken.kind() == CONST) {
+			consume();
+			e = new ConstExpr(firstToken);
+		}
+		else if (firstToken.kind() == LPAREN) {
+			consume();
+			e = expr();
+			match(RPAREN);
+		}
+		else if (firstToken.kind() == LSQUARE) {
+			e = ExpandedPixelExpr();
+		}
+
+		else {
+			throw new SyntaxException("Error: expecting string literal, num literal, boolean literal, identifier, " +
+					"( ), constant, or expanded pixel");
+		}
+		return e;
+	}
+
+	// ChannelSelector ::= : (red | green | blue)
+	private ChannelSelector ChannelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		match(COLON);
+		if (t.kind() == RES_red || t.kind() == RES_green || t.kind() == RES_blue) {
+			IToken color = t;
+			consume();
+			return new ChannelSelector(firstToken, color);
+		}
+		else {
+			throw new SyntaxException("Error: expecting reserved red, green, or blue token");
+		}
+	}
+
+	//PixelSelector  ::= [ Expr , Expr ]
+	private PixelSelector PixelSelector() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr xExpr = null;
+		Expr yExpr = null;
+		match(LSQUARE);
+		xExpr = expr();
+		match(COMMA);
+		yExpr = expr();
+		match(RSQUARE);
+		return new PixelSelector(firstToken, xExpr, yExpr);
+	}
+
+	// ExpandedPixelExpr ::= [ Expr , Expr , Expr ]
+	private Expr ExpandedPixelExpr() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr red = null;
+		Expr green = null;
+		Expr blue = null;
+		match(LSQUARE);
+		red = expr();
+		match(COMMA);
+		green = expr();
+		match(COMMA);
+		blue = expr();
+		match(RSQUARE);
+		red = new ExpandedPixelExpr(firstToken, red, green, blue);
+		return red;
+	}
+
+	// FIXME: Dimension is same as PixelSelector. Is this LL(1)?
+
+	// Dimension ::= [ Expr, Expr ]
+	private Dimension Dimension() throws PLCCompilerException {
+		IToken firstToken = t;
+		Expr xExpr = null;
+		Expr yExpr = null;
+		match(LSQUARE);
+		xExpr = expr();
+		match(COMMA);
+		yExpr = expr();
+		match(RSQUARE);
+		return new Dimension(firstToken, xExpr, yExpr);
+	}
+
+	// LValue ::= IDENT (PixelSelector | ε ) (ChannelSelector | ε )
+	private LValue LValue() throws PLCCompilerException {
+		IToken firstToken = t;
+		match(IDENT);
+		PixelSelector ps = null;
+		ChannelSelector cs = null;
+
+		if (t.kind() == LSQUARE) {
+			ps = PixelSelector();
+		}
+		if (t.kind() == COLON) {
+			cs = ChannelSelector();
+		}
+		return new LValue(firstToken, firstToken, ps, cs);
+
+	}
+
+	/*
+	Statement::=
+		LValue = Expr |
+		write Expr |
+		do GuardedBlock ( [] GuardedBlock) * od |
+		if GuardedBlock ( [] GuardedBlock) * fi |
+		^ Expr |
+		BlockStatement
+	 */
+	private Block.BlockElem Statement() throws PLCCompilerException {
+		IToken firstToken = t;
+		Block.BlockElem s = null;
+
+		if (firstToken.kind() == IDENT) {
+			LValue l = LValue();
+			match(EQ);
+			Expr e = expr();
+			s = new AssignmentStatement(firstToken, l, e);
+		}
+		else if (firstToken.kind() == RES_write)
+		{
+			consume();
+			Expr e = expr();
+			s = new WriteStatement(firstToken, e);
+		}
+		else if (firstToken.kind() == RES_do)
+		{
+			consume();
+			//FIXME: Finish this branch and remaining branches!
+		}
+		else if (firstToken.kind() == RES_if)
+		{
+			consume();
+
+		}
+		else if (firstToken.kind() == RETURN)
+		{
+			consume();
+
+		}
+		else if (firstToken.kind() == BLOCK_OPEN)
+		{
+			consume();
+
+		}
+		else {
+			throw new SyntaxException("Error: expecting... ");
+		}
+		return s;
+	}
+
+	// GuardedBlock := Expr -> Block
+	private GuardedBlock GuardedBlock() throws PLCCompilerException {
+		IToken firstToken = t;
+		GuardedBlock gb = null;
+		Expr e = null;
+		Block b = null;
+		e = expr();
+		match(RARROW);
+		b = Block();
+		gb = new GuardedBlock(firstToken, e, b);
+		return  gb;
+	}
+
+	// BlockStatement ::= Block
+	private Block.BlockElem BlockStatement() throws PLCCompilerException {
+		IToken firstToken = t;
+		StatementBlock sb = null;
+		Block B = null;
+		B = Block();
+		sb = new StatementBlock(firstToken, B);
+		return  sb;
+	}
 
 }
