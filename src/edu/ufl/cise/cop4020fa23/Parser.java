@@ -38,14 +38,114 @@ public class Parser implements IParser {
 		return e;
 	}
 
+	// Program::= Type IDENT ( ParamList ) Block
 	private AST program() throws PLCCompilerException {
-		throw new UnsupportedOperationException();
+		IToken firstToken = t;
+		IToken type = Type();
+		IToken ident = null;
+		List<NameDef> list = null;
+		if (t.kind() == IDENT) {
+			ident = t;
+		}
+		match(IDENT);
+		match(LPAREN);
+		list = ParamList();
+		match(RPAREN);
+		Block b = Block();
+		return new Program(firstToken, type, ident, list, b);
 	}
 
-	private Block Block() {
+	// Block ::= <: (Declaration ; | Statement ;)* :>
+	private Block Block() throws PLCCompilerException {
+		IToken firstToken = t;
+		match(BLOCK_OPEN);
+		List<Block.BlockElem> elems = new ArrayList<Block.BlockElem>();
+		Block.BlockElem el = null;
 
+		if (t.kind() == RES_image || t.kind() == RES_pixel || t.kind() == RES_int
+				|| t.kind() == RES_string || t.kind() == RES_void || t.kind() == RES_boolean
+				|| t.kind() == IDENT || t.kind() == RES_write || t.kind() == RES_do
+				|| t.kind() == RES_if || t.kind() == RETURN || t.kind() == BLOCK_OPEN) {
+
+			while (t.kind() == RES_image || t.kind() == RES_pixel || t.kind() == RES_int
+					|| t.kind() == RES_string || t.kind() == RES_void || t.kind() == RES_boolean
+					|| t.kind() == IDENT || t.kind() == RES_write || t.kind() == RES_do
+					|| t.kind() == RES_if || t.kind() == RETURN || t.kind() == BLOCK_OPEN) {
+				if (t.kind() == RES_image || t.kind() == RES_pixel || t.kind() == RES_int
+						|| t.kind() == RES_string || t.kind() == RES_void || t.kind() == RES_boolean) {
+					el = Declaration();
+
+				}
+				else {
+					el = Statement();
+				}
+				elems.add(el);
+				match(SEMI);
+			}
+		}
+		match(BLOCK_CLOSE);
+		return new Block(firstToken, elems);
 	}
 
+	// ParamList ::= ε | NameDef ( , NameDef ) *
+	private List<NameDef> ParamList() throws PLCCompilerException {
+		List<NameDef> list = new ArrayList<NameDef>();
+		if (t.kind() == RES_image || t.kind() == RES_pixel || t.kind() == RES_int 
+				|| t.kind() == RES_string || t.kind() == RES_void || t.kind() == RES_boolean) {
+			NameDef nd = NameDef();
+			list.add(nd);
+			while (t.kind() == COMMA) {
+				consume();
+				nd = NameDef();
+				list.add(nd);
+			}
+		}
+		return list;
+	}
+
+	// NameDef ::= Type IDENT | Type Dimension IDENT
+	// NameDef ::= Type (Dimension | ε) IDENT
+	private NameDef NameDef() throws PLCCompilerException {
+		IToken firstToken = t;
+		IToken type = Type();
+		IToken ident = null;
+		Dimension d = null;
+		if (t.kind() == LSQUARE) {
+			d = Dimension();
+		}
+		if (t.kind() == IDENT)
+		{
+			ident = t;
+		}
+		match(IDENT);
+		return new NameDef(firstToken, type, d, ident);
+	}
+
+	// Type ::= image | pixel | int | string | void | boolean
+	private IToken Type() throws LexicalException, SyntaxException {
+		IToken firstToken = t;
+        return switch (firstToken.kind()) {
+            case RES_image, RES_pixel, RES_int, RES_string, RES_void, RES_boolean -> {
+                consume();
+                yield firstToken;
+            }
+            default -> throw new SyntaxException("Error: expecting image, pixel, int, string, void, or boolean");
+        };
+	}
+
+	// Declaration::= NameDef | NameDef = Expr
+	// Declaration::= NameDef (= Expr | ε)
+	private Block.BlockElem Declaration() throws PLCCompilerException {
+		IToken firstToken = t;
+		NameDef nd = NameDef();
+		Expr e = null;
+		if (t.kind() == ASSIGN) {
+			consume();
+			e = expr();
+		}
+		return new Declaration(firstToken, nd, e);
+
+	}
 
 
 	// Expr ::=  ConditionalExpr | LogicalOrExpr
@@ -338,6 +438,10 @@ public class Parser implements IParser {
 	// LValue ::= IDENT (PixelSelector | ε ) (ChannelSelector | ε )
 	private LValue LValue() throws PLCCompilerException {
 		IToken firstToken = t;
+		IToken ident = null;
+		if (t.kind() == IDENT) {
+			ident = t;
+		}
 		match(IDENT);
 		PixelSelector ps = null;
 		ChannelSelector cs = null;
@@ -348,7 +452,7 @@ public class Parser implements IParser {
 		if (t.kind() == COLON) {
 			cs = ChannelSelector();
 		}
-		return new LValue(firstToken, firstToken, ps, cs);
+		return new LValue(firstToken, ident, ps, cs);
 
 	}
 
@@ -380,22 +484,41 @@ public class Parser implements IParser {
 		else if (firstToken.kind() == RES_do)
 		{
 			consume();
-			//FIXME: Finish this branch and remaining branches!
+			List<GuardedBlock> blocks = new ArrayList<GuardedBlock>();
+			GuardedBlock gb = GuardedBlock();
+			blocks.add(gb);
+			while (t.kind() == BOX)
+			{
+				gb = GuardedBlock();
+				blocks.add(gb);
+			}
+			match(RES_od);
+			return new DoStatement(firstToken, blocks);
 		}
 		else if (firstToken.kind() == RES_if)
 		{
 			consume();
+			List<GuardedBlock> blocks = new ArrayList<GuardedBlock>();
+			GuardedBlock gb = GuardedBlock();
+			blocks.add(gb);
+			while (t.kind() == BOX)
+			{
+				gb = GuardedBlock();
+				blocks.add(gb);
+			}
+			match(RES_fi);
+			return new IfStatement(firstToken, blocks);
 
 		}
 		else if (firstToken.kind() == RETURN)
 		{
 			consume();
-
+			Expr e = expr();
+			s = new ReturnStatement(firstToken, e);
 		}
 		else if (firstToken.kind() == BLOCK_OPEN)
 		{
-			consume();
-
+			s = BlockStatement();
 		}
 		else {
 			throw new SyntaxException("Error: expecting... ");
@@ -406,24 +529,17 @@ public class Parser implements IParser {
 	// GuardedBlock := Expr -> Block
 	private GuardedBlock GuardedBlock() throws PLCCompilerException {
 		IToken firstToken = t;
-		GuardedBlock gb = null;
-		Expr e = null;
-		Block b = null;
-		e = expr();
+		Expr e = expr();
 		match(RARROW);
-		b = Block();
-		gb = new GuardedBlock(firstToken, e, b);
-		return  gb;
+		Block b = Block();
+		return new GuardedBlock(firstToken, e, b);
 	}
 
 	// BlockStatement ::= Block
 	private Block.BlockElem BlockStatement() throws PLCCompilerException {
 		IToken firstToken = t;
-		StatementBlock sb = null;
-		Block B = null;
-		B = Block();
-		sb = new StatementBlock(firstToken, B);
-		return  sb;
+		Block B = Block();
+		return new StatementBlock(firstToken, B);
 	}
 
 }
