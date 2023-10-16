@@ -35,6 +35,10 @@ public class Parser implements IParser {
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST e = program();
+		if (t.kind() != EOF)
+		{
+			throw new SyntaxException("Error: tokens remaining");
+		}
 		return e;
 	}
 
@@ -471,7 +475,7 @@ public class Parser implements IParser {
 
 		if (firstToken.kind() == IDENT) {
 			LValue l = LValue();
-			match(EQ);
+			match(ASSIGN);
 			Expr e = expr();
 			s = new AssignmentStatement(firstToken, l, e);
 		}
@@ -489,6 +493,7 @@ public class Parser implements IParser {
 			blocks.add(gb);
 			while (t.kind() == BOX)
 			{
+				consume();
 				gb = GuardedBlock();
 				blocks.add(gb);
 			}
@@ -503,6 +508,7 @@ public class Parser implements IParser {
 			blocks.add(gb);
 			while (t.kind() == BOX)
 			{
+				consume();
 				gb = GuardedBlock();
 				blocks.add(gb);
 			}
@@ -521,7 +527,7 @@ public class Parser implements IParser {
 			s = BlockStatement();
 		}
 		else {
-			throw new SyntaxException("Error: expecting... ");
+			throw new SyntaxException("Error: expecting identifier, write, if, do, ^, or <:");
 		}
 		return s;
 	}
