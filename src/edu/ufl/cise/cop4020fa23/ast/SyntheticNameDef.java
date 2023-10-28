@@ -12,40 +12,38 @@ package edu.ufl.cise.cop4020fa23.ast;
 import java.util.Objects;
 
 import edu.ufl.cise.cop4020fa23.IToken;
-import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 
 /**
  * 
  */
-public class StatementBlock extends Statement {
+public class SyntheticNameDef extends NameDef {
 
-	final Block block;
+	/** Declaration for implicitly declared variables.  This class is not used in the Parser */
 	
-	
-	/**
-	 * @param firstToken
-	 * @param block
-	 */
-	public StatementBlock(IToken firstToken, Block block) {
-		super(firstToken);
-		this.block = block;
+	final String name;
+
+	public SyntheticNameDef(String name) {
+		super(null, null, null, null);
+		this.name = name;
 	}
-
-
+	
 	@Override
-	public Object visit(ASTVisitor v, Object arg) throws PLCCompilerException {
-		return v.visitBlockStatement(this, arg);
+	public String getName() {
+		return name;
 	}
-
+	
+	@Override
+	public Type getType() {
+		return Type.INT;
+	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result + Objects.hash(block);
+		result = prime * result + Objects.hash(name);
 		return result;
 	}
-
 
 	@Override
 	public boolean equals(Object obj) {
@@ -55,21 +53,24 @@ public class StatementBlock extends Statement {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		StatementBlock other = (StatementBlock) obj;
-		return Objects.equals(block, other.block);
+		SyntheticNameDef other = (SyntheticNameDef) obj;
+		return Objects.equals(name, other.name);
 	}
-
-
-	public Block getBlock() {
-		return block;
-	}
-
 
 	@Override
 	public String toString() {
-		return "StatementBlock [block=" + block + "]";
+		return "SyntheticNameDef [name=" + name + "]";
 	}
-	
-	
 
+	@Override
+	public 
+	IToken getIdentToken() {throw new UnsupportedOperationException();}
+	
+	@Override
+	public 
+	IToken getTypeToken() {throw new UnsupportedOperationException();}
+	
+	@Override
+	public
+	Dimension getDimension() {throw new UnsupportedOperationException();}
 }
