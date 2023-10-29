@@ -213,6 +213,20 @@ class TypeCheckTest_starter {
 	}
 
 	@Test
+	void myTest0() throws PLCCompilerException {
+		String input = """
+				int f()<: write 3; :>
+				""";
+		AST ast = getDecoratedAST(input);
+		Program program0 = checkProgram(ast, Type.INT, "f");
+		List<NameDef> params1 = program0.getParams();
+		assertEquals(0, params1.size());
+		Block programBlock2 = ((Program) ast).getBlock();
+		List<BlockElem> blockElemList3 = programBlock2.getElems();
+		assertEquals(1, blockElemList3.size());
+	}
+
+	@Test
 	void test0() throws PLCCompilerException {
 		String input = """
 				void prog0() <::>
