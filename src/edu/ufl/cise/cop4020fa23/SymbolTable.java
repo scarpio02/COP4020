@@ -7,37 +7,28 @@ import java.util.HashMap;
 import java.util.Stack;
 
 public class SymbolTable {
-    /*
-    int  current_num;//serial number of current scope
-    int  next_num;   //next serial number to assign
-
-    void enterScope()
-    {   current_num = next_num++;
-        scope_stack.push(current_num);
-    }
-
-    void closeScope()
-    {  current_num = scope_stack.pop();
-    }
-
-    void lookup(String name)
-    {   look up entry with key “name” in symbol table;
-        scan chain—entries whose serial number is in the scope stack are visible.
-       Return entry with serial number closest to the top of the scopestack.
-        If none, this is an error—the name is not bound in the current scope.
-    }
-     */
-
     int current_num;
     int next_num;
     Stack<Integer> scope_stack;
-    HashMap<String, NameDef> symbol_table;
+    HashMap<String, Entry> symbol_table;
+
+    class Entry {
+        NameDef nameDef;
+        int scopeID;
+        Entry link = null;
+
+        Entry(NameDef nd, int id, Entry e) {
+            nameDef = nd;
+            scopeID = id;
+            link = e;
+        }
+    }
 
     public SymbolTable() {
          current_num = 0;
          next_num = 1;
          scope_stack = new Stack<Integer>();
-         symbol_table = new HashMap<String, NameDef>();
+         symbol_table = new HashMap<String, Entry>();
     }
     void enterScope() {
         current_num = next_num++;
@@ -49,14 +40,38 @@ public class SymbolTable {
     }
     void insert(NameDef name) throws TypeCheckException {
         if (symbol_table.containsKey(name.getName())) {
-            throw new TypeCheckException(name.getName() + " is already defined in scope");
+            if (symbol_table.get(name.getName()).scopeID == current_num) {
+                throw new TypeCheckException(name.getName() + " is already defined in scope");
+            }
+            else {
+                symbol_table.get(name.getName()).link = symbol_table.get(name.getName());
+                symbol_table.get(name.getName()).nameDef = name;
+                symbol_table.get(name.getName()).scopeID = current_num;
+
+            }
         }
         else {
-            symbol_table.put(name.getName(), name);
+
+            symbol_table.put(name.getName(), new Entry(name, current_num, null));
         }
     }
-    NameDef lookup(String name) {
+    NameDef lookup(String name) throws TypeCheckException {
         // FIXME: This is not fully implemented
-        return symbol_table.get(name);
+        if (!symbol_table.containsKey(name)) {
+            throw new TypeCheckException(name + " is not defined");
+        }
+        else {
+            Entry currE = symbol_table.get(name);
+            while (currE != null) {
+                if (currE.scopeID <= current_num) {
+                    return currE.nameDef;
+                }
+                else {
+                    currE = currE.link;
+                }
+            }
+            throw new TypeCheckException(name + " is not defined in current scope");
+        }
+
     }
 }

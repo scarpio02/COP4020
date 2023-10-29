@@ -8,7 +8,7 @@ import java.util.List;
 
 public class TypeCheckVisitor implements ASTVisitor {
     SymbolTable st;
-    AST root;
+    Program root;
 
     public TypeCheckVisitor() {
         st = new SymbolTable();
@@ -70,6 +70,16 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
         throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitDeclaration invoked.");
+        /*
+        Declaration::= NameDef Expr?
+            Condition: Expr == null
+            || Expr.type == NameDef.type
+            || (Expr.type == STRING && NameDef.type == IMAGE)
+            Declaration.type  NameDef.type
+            Note: visit Expr before NameDef
+        */
+
+
     }
 
     @Override
@@ -121,7 +131,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitNameDef(NameDef nameDef, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitNameDef invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitNameDef invoked.");
+        /*
+        NameDef ::= Type Dimension? IDENT
+            Condition: if (Dimension != null) { type == IMAGE }
+            else Type ∈ {INT, BOOLEAN, STRING, PIXEL, IMAGE}
+            NameDef.type <- type
+            symbolTable.insert(nameDef) is successful
+        */
+        Type type;
+        if (nameDef.getDimension() != null) {
+            type = Type.IMAGE;
+        }
+        else {
+            type = nameDef.getType();
+        }
+        nameDef.setType(type);
+        st.insert(nameDef);
+        return type;
     }
 
     @Override
