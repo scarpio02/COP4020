@@ -35,8 +35,7 @@ public class Parser implements IParser {
 	@Override
 	public AST parse() throws PLCCompilerException {
 		AST e = program();
-		if (t.kind() != EOF)
-		{
+		if (t.kind() != EOF) {
 			throw new SyntaxException("Error: tokens remaining");
 		}
 		return e;
