@@ -95,12 +95,23 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBlockStatement invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBlockStatement invoked.");
+        //StatementBlock ::= Block[block]
+
+        statementBlock.getBlock().visit(this, arg);
+        return statementBlock; //FIXME: I'm not sure what's best to return here
     }
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitChannelSelector invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitChannelSelector invoked.");
+        Kind c = channelSelector.color();
+        if (c == Kind.RES_red || c == Kind.RES_green || c == Kind.RES_blue) {
+            return channelSelector; //FIXME: I'm not sure what's best to return here
+        }
+        else {
+            throw new TypeCheckException("ChannelSelector has invalid type");
+        }
     }
 
     @Override
@@ -173,7 +184,24 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitExpandedPixelExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitExpandedPixelExpr invoked.");
+        /*
+        ExpandedPixelExpr ::= Expr[red] Expr[green] Expr[blue]
+            Condition: Expr[red].type == INT
+            Condition: Expr[green].type == INT
+            Condition: Expr[blue].type == INT
+            ExpandedPixelExpr.type <- PIXEL
+        */
+
+        Type typeR = (Type) expandedPixelExpr.getRed().visit(this, arg);
+        check(typeR == Type.INT, expandedPixelExpr, "Expanded pixel's red component must be int");
+        Type typeG = (Type) expandedPixelExpr.getGreen().visit(this, arg);
+        check(typeG == Type.INT, expandedPixelExpr, "Expanded pixel's green component must be int");
+        Type typeB = (Type) expandedPixelExpr.getBlue().visit(this, arg);
+        check(typeB == Type.INT, expandedPixelExpr, "Expanded pixel's blue component must be int");
+        Type type = Type.PIXEL;
+        expandedPixelExpr.setType(type);
+        return type;
     }
 
     @Override
@@ -183,7 +211,16 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitIdentExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitIdentExpr invoked.");
+//        IdentExpr
+    //        Condition: symbolTable.lookup(IdentExpr.name) defined
+    //        IdentExpr.nameDef <- symbolTable.lookup(IdentExpr.name)
+    //        IdentExpr.type <- IdentExpr.nameDef.type
+        identExpr.setNameDef(st.lookup(identExpr.getName()));
+        Type type = (Type) identExpr.getNameDef().visit(this, arg);
+        identExpr.setType(type);
+        return type;
+
     }
 
     @Override
@@ -209,6 +246,7 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type type;
         if (nameDef.getDimension() != null) {
             type = Type.IMAGE;
+            nameDef.getDimension().visit(this, arg);
         }
         else {
             Type temp = nameDef.getType();
@@ -227,7 +265,6 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
         //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitNumLitExpr invoked.");
-
         /*
         NumLitExpr
             NumLitExpr.type <- INT
@@ -243,9 +280,37 @@ public class TypeCheckVisitor implements ASTVisitor {
         throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitPixelSelector invoked.");
     }
 
+    Type inferPostfixExprType(Type e, PixelSelector ps, ChannelSelector cs) throws TypeCheckException {
+        if (ps == null && cs == null) {
+            return e;
+        }
+        else if (e == Type.IMAGE && ps != null && cs == null) {
+            return Type.PIXEL;
+        }
+        else if (e == Type.IMAGE && ps != null && cs != null) {
+            return Type.INT;
+        }
+        else if (e == Type.IMAGE && ps == null && cs != null) {
+            return Type.IMAGE;
+        }
+        else if (e == Type.PIXEL && ps == null && cs != null) {
+            return Type.INT;
+        }
+
+        throw new TypeCheckException("Invalid types for PostfixExpr");
+    }
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitPostfixExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitPostfixExpr invoked.");
+        /*
+        PostfixExpr::= Expr PixelSelector? ChannelSelector?
+            Condition: inferPostfixExprType is defined
+            PostfixExpr.type  inferPostfixExprType(Epxr.type, PixelSelector, ChannelSelector)
+        */
+        Type typeE = (Type) postfixExpr.primary().visit(this, arg);
+        Type type = inferPostfixExprType(typeE, postfixExpr.pixel(), postfixExpr.channel());
+        postfixExpr.setType(type);
+        return type;
     }
 
     @Override
@@ -259,7 +324,6 @@ public class TypeCheckVisitor implements ASTVisitor {
             symbolTable.leave Scope()
             Note: there are no constraints involving IDENT—it is not entered into the symbol table
          */
-        //FIXME: "Not completely correct. Returns type because it is usually convenient to return a type for any node that has one."
         root = program;
         Type type = Type.kind2type(program.getTypeToken().kind());
         program.setType(type);
@@ -276,12 +340,22 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitReturnStatement invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitReturnStatement invoked.");
+//        ReturnStatement ::= Expr[e]
+    //        Condition: Expr.type == Program.type (where Program is the enclosing program)
+        Type type = (Type) returnStatement.getE().visit(this, arg);
+        check(type == root.getType(), returnStatement, "Return statement and program types do no match");
+        return type;
     }
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitStringLitExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitStringLitExpr invoked.");
+//        StringLitExpr
+//          StringLitExpr.type <- STRING
+        Type type = Type.STRING;
+        stringLitExpr.setType(type);
+        return type;
     }
 
     Type inferUnaryExprType(Type t, Kind op) throws TypeCheckException {
@@ -313,22 +387,33 @@ public class TypeCheckVisitor implements ASTVisitor {
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitWriteStatement invoked.");
-
         /*
         WriteStatement ::= Expr[expr]
         */
-
         writeStatement.getExpr().visit(this, arg);
         return writeStatement;
     }
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBooleanLitExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBooleanLitExpr invoked.");
+//      BooleanLitExpr
+//          BooleanLitExpr.type <- BOOLEAN
+        Type type = Type.BOOLEAN;
+        booleanLitExpr.setType(type);
+        return type;
     }
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitConstExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitConstExpr invoked.");
+//        ConstExpr
+//          ConstExpr.type <- if (ConstExpr.name == ‘Z’) INT else PIXEL
+        Type type = Type.PIXEL;
+        if (constExpr.getName() == "Z") {
+            type = Type.INT;
+        }
+        constExpr.setType(type);
+        return type;
     }
 }
