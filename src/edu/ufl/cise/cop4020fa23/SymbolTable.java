@@ -40,15 +40,15 @@ public class SymbolTable {
     }
     void insert(NameDef name) throws TypeCheckException {
         if (symbol_table.containsKey(name.getName())) {
-            if (symbol_table.get(name.getName()).scopeID == current_num) {
-                throw new TypeCheckException(name.getName() + " is already defined in scope");
+            Entry currE = symbol_table.get(name);
+            while (currE != null) {
+                if (currE.scopeID == current_num) {
+                    throw new TypeCheckException(name.getName() + " is already defined in scope");
+                }
             }
-            else {
-                symbol_table.get(name.getName()).link = symbol_table.get(name.getName());
-                symbol_table.get(name.getName()).nameDef = name;
-                symbol_table.get(name.getName()).scopeID = current_num;
-
-            }
+            symbol_table.get(name.getName()).link = symbol_table.get(name.getName());
+            symbol_table.get(name.getName()).nameDef = name;
+            symbol_table.get(name.getName()).scopeID = current_num;
         }
         else {
 
@@ -56,7 +56,6 @@ public class SymbolTable {
         }
     }
     NameDef lookup(String name) throws TypeCheckException {
-        // FIXME: This is not fully implemented
         if (!symbol_table.containsKey(name)) {
             throw new TypeCheckException(name + " is not defined");
         }

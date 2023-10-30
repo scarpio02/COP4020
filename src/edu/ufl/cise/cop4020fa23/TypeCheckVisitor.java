@@ -26,9 +26,50 @@ public class TypeCheckVisitor implements ASTVisitor {
         throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitAssignmentStatement invoked.");
     }
 
+    Type inferBinaryType(Type l, Kind op, Type r) throws TypeCheckException {
+        if (l == Type.PIXEL && r == Type.PIXEL && (op == Kind.BITAND || op == Kind.BITOR)) {
+            return Type.PIXEL;
+        }
+        else if (l == Type.PIXEL && r == Type.INT && op == Kind.EXP) {
+            return Type.PIXEL;
+        }
+        else if ((l == Type.PIXEL || l == Type.IMAGE) && r == Type.INT && (op== Kind.TIMES || op== Kind.DIV || op == Kind.MOD)) {
+            return l;
+        }
+        else if (l == Type.BOOLEAN && r == Type.BOOLEAN && (op == Kind.AND || op == Kind.OR)) {
+            return Type.BOOLEAN;
+        }
+        else if (l == Type.INT && r == Type.INT && (op == Kind.LT || op == Kind.GT || op == Kind.LE || op == Kind.GE)) {
+            return Type.BOOLEAN;
+        }
+        else if (l == Type.INT && r == Type.INT && op == Kind.EXP) {
+            return Type.INT;
+        }
+        else if ((l == Type.INT || l == Type.PIXEL || l == Type.IMAGE) && r == l && (op == Kind.MINUS || op == Kind.TIMES || op == Kind.DIV || op == Kind.MOD)) {
+            return l;
+        }
+        else if (r == l && op == Kind.EQ) {
+            return Type.BOOLEAN;
+        }
+        else if (r == l && op == Kind.PLUS) {
+            return l;
+        }
+
+        throw new TypeCheckException("Invalid types for BinaryExpr");
+    }
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBinaryExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitBinaryExpr invoked.");
+        /*
+        BinaryExpr ::= ExprleftExpr op ExprrigthExpr ‘
+            Condition inferBinaryType is defined
+            BinaryExpr.type  inferBinaryType(ExprleftExpr.type, op, ExprrigthExpr .type)
+        */
+        Type typeL = (Type) binaryExpr.getLeftExpr().visit(this, arg);
+        Type typeR = (Type) binaryExpr.getRightExpr().visit(this, arg);
+        Type type = inferBinaryType(typeL, binaryExpr.getOpKind(), typeR);
+        binaryExpr.setType(type);
+        return type;
     }
 
     @Override
@@ -64,21 +105,47 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitConditionalExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitConditionalExpr invoked.");
+
+        /*
+        ConditionalExpr ::= Expr[guardExpr]
+            Expr[trueExpr]
+            Expr[falseExpr]
+            Condition: Expr[guardExpr].type == BOOLEAN
+            Condition: Expr[trueExpr].type == Expr[falseExpr].type
+            ConditionalExpr.type <- trueExpr.type
+        */
+        Type typeG = (Type) conditionalExpr.getGuardExpr().visit(this, arg);
+        check(typeG == Type.BOOLEAN, conditionalExpr, "conditional guard expression must be boolean");
+        Type typeT = (Type) conditionalExpr.getTrueExpr().visit(this, arg);
+        Type typeF = (Type) conditionalExpr.getFalseExpr().visit(this, arg);
+        check(typeT == typeF, conditionalExpr, "conditional true and false expressions must be same type");
+        conditionalExpr.setType(typeT);
+        return typeT;
+
     }
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitDeclaration invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitDeclaration invoked.");
         /*
         Declaration::= NameDef Expr?
             Condition: Expr == null
             || Expr.type == NameDef.type
             || (Expr.type == STRING && NameDef.type == IMAGE)
-            Declaration.type  NameDef.type
+            Declaration.type <- NameDef.type
             Note: visit Expr before NameDef
         */
-
+        Type typeE = null;
+        if (declaration.getInitializer() != null)
+        {
+            typeE = (Type) declaration.getInitializer().visit(this, arg);
+        }
+        Type typeN = (Type) declaration.getNameDef().visit(this, arg);
+        if (declaration.getInitializer() == null || typeE == typeN || typeE == Type.STRING && typeN == Type.IMAGE) {
+            return typeN;
+        }
+        throw new TypeCheckException("Invalid types for for declaration");
 
     }
 
@@ -144,7 +211,13 @@ public class TypeCheckVisitor implements ASTVisitor {
             type = Type.IMAGE;
         }
         else {
-            type = nameDef.getType();
+            Type temp = nameDef.getType();
+            if (temp == Type.INT || temp == Type.BOOLEAN || temp == Type.STRING || temp == Type.PIXEL || temp == Type.IMAGE) {
+                type = temp;
+            }
+            else {
+                throw new TypeCheckException("Invalid type for NameDef");
+            }
         }
         nameDef.setType(type);
         st.insert(nameDef);
@@ -211,11 +284,32 @@ public class TypeCheckVisitor implements ASTVisitor {
         throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitStringLitExpr invoked.");
     }
 
+    Type inferUnaryExprType(Type t, Kind op) throws TypeCheckException {
+        if (t == Type.BOOLEAN && op == Kind.BANG) {
+            return Type.BOOLEAN;
+        }
+        else if (t == Type.INT && op == Kind.MINUS) {
+            return Type.INT;
+        }
+        else if (t == Type.IMAGE && (op == Kind.RES_width || op == Kind.RES_height)) {
+            return Type.INT;
+        }
+
+        throw new TypeCheckException("Invalid types for UnaryExpr");
+    }
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitUnaryExpr invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitUnaryExpr invoked.");
+        /*
+        UnaryExpr ::= op Expr
+            Condition: inferUnaryExpr is defined
+            UnaryExpr.type <- inferUnaryExprType(Expr.type, op,)
+        */
+        Type typeE = (Type) unaryExpr.getExpr().visit(this, arg);
+        Type type = inferUnaryExprType(typeE, unaryExpr.getOp());
+        unaryExpr.setType(type);
+        return type;
     }
-
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
         //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitWriteStatement invoked.");
