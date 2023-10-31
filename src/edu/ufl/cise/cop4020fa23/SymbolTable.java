@@ -38,13 +38,16 @@ public class SymbolTable {
     void leaveScope() {
         current_num = scope_stack.pop();
     }
+
+    //FIXME: Infinite looping in symbol table. MUST FIX!!!!!!!!!!
     void insert(NameDef name) throws TypeCheckException {
         if (symbol_table.containsKey(name.getName())) {
-            Entry currE = symbol_table.get(name);
+            Entry currE = symbol_table.get(name.getName());
             while (currE != null) {
                 if (currE.scopeID == current_num) {
                     throw new TypeCheckException(name.getName() + " is already defined in scope");
                 }
+                currE = currE.link;
             }
             symbol_table.get(name.getName()).link = symbol_table.get(name.getName());
             symbol_table.get(name.getName()).nameDef = name;
