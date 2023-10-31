@@ -775,202 +775,202 @@ class TypeCheckTest_starter {
 		checkIdentExpr(rightExpr10, "xx", Type.INT);
 	}
 
-//	@Test
-//	void test14() throws PLCCompilerException {
-//		String input = """
-//				int f(int xx)<:
-//				int i = 3;
-//				do  i > 0 -> <:
-//				   write xx;
-//				   i = i -1;
-//				:>
-//				od;
-//				^i;
-//				:>
-//				""";
-//		AST ast = getDecoratedAST(input);
-//		Program program0 = checkProgram(ast, Type.INT, "f");
-//		List<NameDef> params1 = program0.getParams();
-//		assertEquals(1, params1.size());
-//		NameDef paramNameDef2 = params1.get(0);
-//		checkNameDef(paramNameDef2, Type.INT, "xx");
-//		Block programBlock3 = ((Program) ast).getBlock();
-//		List<BlockElem> blockElemList4 = programBlock3.getElems();
-//		assertEquals(3, blockElemList4.size());
-//		BlockElem blockElem5 = blockElemList4.get(0);
-//		checkDec(blockElem5);
-//		NameDef nameDef6 = ((Declaration) blockElem5).getNameDef();
-//		checkNameDef(nameDef6, Type.INT, "i");
-//		Expr expr7 = ((Declaration) blockElem5).getInitializer();
-//		checkNumLitExpr(expr7, 3);
-//		BlockElem blockElem8 = blockElemList4.get(1);
-//		assertThat("", blockElem8, instanceOf(DoStatement.class));
-//		List<GuardedBlock> guardedBlocks9 = ((DoStatement) blockElem8).getGuardedBlocks();
-//		assertEquals(1, guardedBlocks9.size());
-//		GuardedBlock guardedBlock10 = guardedBlocks9.get(0);
-//		assertThat("", guardedBlock10, instanceOf(GuardedBlock.class));
-//		Expr guard11 = guardedBlock10.getGuard();
-//		checkBinaryExpr(guard11, Kind.GT, Type.BOOLEAN);
-//		Expr leftExpr12 = ((BinaryExpr) guard11).getLeftExpr();
-//		checkIdentExpr(leftExpr12, "i", Type.INT);
-//		Expr rightExpr13 = ((BinaryExpr) guard11).getRightExpr();
-//		checkNumLitExpr(rightExpr13, 0);
-//		Block block14 = guardedBlock10.getBlock();
-//		List<BlockElem> blockElemList15 = block14.getElems();
-//		assertEquals(2, blockElemList15.size());
-//		BlockElem blockElem16 = blockElemList15.get(0);
-//		assertThat("", blockElem16, instanceOf(WriteStatement.class));
-//		Expr writeStatementExpr17 = ((WriteStatement) blockElem16).getExpr();
-//		checkIdentExpr(writeStatementExpr17, "xx", Type.INT);
-//		BlockElem blockElem18 = blockElemList15.get(1);
-//		assertThat("", blockElem18, instanceOf(AssignmentStatement.class));
-//		LValue LValue19 = ((AssignmentStatement) blockElem18).getlValue();
-//		assertThat("", LValue19, instanceOf(LValue.class));
-//		String name20 = LValue19.getName();
-//		assertEquals("i", name20);
-//		assertNull(LValue19.getPixelSelector());
-//		assertNull(LValue19.getChannelSelector());
-//		Expr expr21 = ((AssignmentStatement) blockElem18).getE();
-//		checkBinaryExpr(expr21, Kind.MINUS, Type.INT);
-//		Expr leftExpr22 = ((BinaryExpr) expr21).getLeftExpr();
-//		checkIdentExpr(leftExpr22, "i", Type.INT);
-//		Expr rightExpr23 = ((BinaryExpr) expr21).getRightExpr();
-//		checkNumLitExpr(rightExpr23, 1);
-//		BlockElem blockElem24 = blockElemList4.get(2);
-//		assertThat("", blockElem24, instanceOf(ReturnStatement.class));
-//		Expr returnValueExpr25 = ((ReturnStatement) blockElem24).getE();
-//		checkIdentExpr(returnValueExpr25, "i", Type.INT);
-//	}
+	@Test
+	void test14() throws PLCCompilerException {
+		String input = """
+				int f(int xx)<:
+				int i = 3;
+				do  i > 0 -> <:
+				   write xx;
+				   i = i -1;
+				:>
+				od;
+				^i;
+				:>
+				""";
+		AST ast = getDecoratedAST(input);
+		Program program0 = checkProgram(ast, Type.INT, "f");
+		List<NameDef> params1 = program0.getParams();
+		assertEquals(1, params1.size());
+		NameDef paramNameDef2 = params1.get(0);
+		checkNameDef(paramNameDef2, Type.INT, "xx");
+		Block programBlock3 = ((Program) ast).getBlock();
+		List<BlockElem> blockElemList4 = programBlock3.getElems();
+		assertEquals(3, blockElemList4.size());
+		BlockElem blockElem5 = blockElemList4.get(0);
+		checkDec(blockElem5);
+		NameDef nameDef6 = ((Declaration) blockElem5).getNameDef();
+		checkNameDef(nameDef6, Type.INT, "i");
+		Expr expr7 = ((Declaration) blockElem5).getInitializer();
+		checkNumLitExpr(expr7, 3);
+		BlockElem blockElem8 = blockElemList4.get(1);
+		assertThat("", blockElem8, instanceOf(DoStatement.class));
+		List<GuardedBlock> guardedBlocks9 = ((DoStatement) blockElem8).getGuardedBlocks();
+		assertEquals(1, guardedBlocks9.size());
+		GuardedBlock guardedBlock10 = guardedBlocks9.get(0);
+		assertThat("", guardedBlock10, instanceOf(GuardedBlock.class));
+		Expr guard11 = guardedBlock10.getGuard();
+		checkBinaryExpr(guard11, Kind.GT, Type.BOOLEAN);
+		Expr leftExpr12 = ((BinaryExpr) guard11).getLeftExpr();
+		checkIdentExpr(leftExpr12, "i", Type.INT);
+		Expr rightExpr13 = ((BinaryExpr) guard11).getRightExpr();
+		checkNumLitExpr(rightExpr13, 0);
+		Block block14 = guardedBlock10.getBlock();
+		List<BlockElem> blockElemList15 = block14.getElems();
+		assertEquals(2, blockElemList15.size());
+		BlockElem blockElem16 = blockElemList15.get(0);
+		assertThat("", blockElem16, instanceOf(WriteStatement.class));
+		Expr writeStatementExpr17 = ((WriteStatement) blockElem16).getExpr();
+		checkIdentExpr(writeStatementExpr17, "xx", Type.INT);
+		BlockElem blockElem18 = blockElemList15.get(1);
+		assertThat("", blockElem18, instanceOf(AssignmentStatement.class));
+		LValue LValue19 = ((AssignmentStatement) blockElem18).getlValue();
+		assertThat("", LValue19, instanceOf(LValue.class));
+		String name20 = LValue19.getName();
+		assertEquals("i", name20);
+		assertNull(LValue19.getPixelSelector());
+		assertNull(LValue19.getChannelSelector());
+		Expr expr21 = ((AssignmentStatement) blockElem18).getE();
+		checkBinaryExpr(expr21, Kind.MINUS, Type.INT);
+		Expr leftExpr22 = ((BinaryExpr) expr21).getLeftExpr();
+		checkIdentExpr(leftExpr22, "i", Type.INT);
+		Expr rightExpr23 = ((BinaryExpr) expr21).getRightExpr();
+		checkNumLitExpr(rightExpr23, 1);
+		BlockElem blockElem24 = blockElemList4.get(2);
+		assertThat("", blockElem24, instanceOf(ReturnStatement.class));
+		Expr returnValueExpr25 = ((ReturnStatement) blockElem24).getE();
+		checkIdentExpr(returnValueExpr25, "i", Type.INT);
+	}
 
-//	@Test
-//	void test15() throws PLCCompilerException {
-//		String input = """
-//				int f(int xx)<:
-//				int i = 3;
-//				do i > 0 -> <:
-//				   string xx = "hello";
-//				   write xx;
-//				   i = i -1;
-//				:>
-//				od;
-//				i = 3;
-//				do i > 0 -> <:
-//				   image xx = "url";
-//				   write xx;
-//				   i = i -1;
-//				:>
-//				od;
-//				^i;
-//				:>
-//				""";
-//		AST ast = getDecoratedAST(input);
-//		Program program0 = checkProgram(ast, Type.INT, "f");
-//		List<NameDef> params1 = program0.getParams();
-//		assertEquals(1, params1.size());
-//		NameDef paramNameDef2 = params1.get(0);
-//		checkNameDef(paramNameDef2, Type.INT, "xx");
-//		Block programBlock3 = ((Program) ast).getBlock();
-//		List<BlockElem> blockElemList4 = programBlock3.getElems();
-//		assertEquals(5, blockElemList4.size());
-//		BlockElem blockElem5 = blockElemList4.get(0);
-//		checkDec(blockElem5);
-//		NameDef nameDef6 = ((Declaration) blockElem5).getNameDef();
-//		checkNameDef(nameDef6, Type.INT, "i");
-//		Expr expr7 = ((Declaration) blockElem5).getInitializer();
-//		checkNumLitExpr(expr7, 3);
-//		BlockElem blockElem8 = blockElemList4.get(1);
-//		assertThat("", blockElem8, instanceOf(DoStatement.class));
-//		List<GuardedBlock> guardedBlocks9 = ((DoStatement) blockElem8).getGuardedBlocks();
-//		assertEquals(1, guardedBlocks9.size());
-//		GuardedBlock guardedBlock10 = guardedBlocks9.get(0);
-//		assertThat("", guardedBlock10, instanceOf(GuardedBlock.class));
-//		Expr guard11 = guardedBlock10.getGuard();
-//		checkBinaryExpr(guard11, Kind.GT, Type.BOOLEAN);
-//		Expr leftExpr12 = ((BinaryExpr) guard11).getLeftExpr();
-//		checkIdentExpr(leftExpr12, "i", Type.INT);
-//		Expr rightExpr13 = ((BinaryExpr) guard11).getRightExpr();
-//		checkNumLitExpr(rightExpr13, 0);
-//		Block block14 = guardedBlock10.getBlock();
-//		List<BlockElem> blockElemList15 = block14.getElems();
-//		assertEquals(3, blockElemList15.size());
-//		BlockElem blockElem16 = blockElemList15.get(0);
-//		checkDec(blockElem16);
-//		NameDef nameDef17 = ((Declaration) blockElem16).getNameDef();
-//		checkNameDef(nameDef17, Type.STRING, "xx");
-//		Expr expr18 = ((Declaration) blockElem16).getInitializer();
-//		checkStringLitExpr(expr18, "hello");
-//		BlockElem blockElem19 = blockElemList15.get(1);
-//		assertThat("", blockElem19, instanceOf(WriteStatement.class));
-//		Expr writeStatementExpr20 = ((WriteStatement) blockElem19).getExpr();
-//		checkIdentExpr(writeStatementExpr20, "xx", Type.STRING);
-//		BlockElem blockElem21 = blockElemList15.get(2);
-//		assertThat("", blockElem21, instanceOf(AssignmentStatement.class));
-//		LValue LValue22 = ((AssignmentStatement) blockElem21).getlValue();
-//		assertThat("", LValue22, instanceOf(LValue.class));
-//		String name23 = LValue22.getName();
-//		assertEquals("i", name23);
-//		assertNull(LValue22.getPixelSelector());
-//		assertNull(LValue22.getChannelSelector());
-//		Expr expr24 = ((AssignmentStatement) blockElem21).getE();
-//		checkBinaryExpr(expr24, Kind.MINUS, Type.INT);
-//		Expr leftExpr25 = ((BinaryExpr) expr24).getLeftExpr();
-//		checkIdentExpr(leftExpr25, "i", Type.INT);
-//		Expr rightExpr26 = ((BinaryExpr) expr24).getRightExpr();
-//		checkNumLitExpr(rightExpr26, 1);
-//		BlockElem blockElem27 = blockElemList4.get(2);
-//		assertThat("", blockElem27, instanceOf(AssignmentStatement.class));
-//		LValue LValue28 = ((AssignmentStatement) blockElem27).getlValue();
-//		assertThat("", LValue28, instanceOf(LValue.class));
-//		String name29 = LValue28.getName();
-//		assertEquals("i", name29);
-//		assertNull(LValue28.getPixelSelector());
-//		assertNull(LValue28.getChannelSelector());
-//		Expr expr30 = ((AssignmentStatement) blockElem27).getE();
-//		checkNumLitExpr(expr30, 3);
-//		BlockElem blockElem31 = blockElemList4.get(3);
-//		assertThat("", blockElem31, instanceOf(DoStatement.class));
-//		List<GuardedBlock> guardedBlocks32 = ((DoStatement) blockElem31).getGuardedBlocks();
-//		assertEquals(1, guardedBlocks32.size());
-//		GuardedBlock guardedBlock33 = guardedBlocks32.get(0);
-//		assertThat("", guardedBlock33, instanceOf(GuardedBlock.class));
-//		Expr guard34 = guardedBlock33.getGuard();
-//		checkBinaryExpr(guard34, Kind.GT, Type.BOOLEAN);
-//		Expr leftExpr35 = ((BinaryExpr) guard34).getLeftExpr();
-//		checkIdentExpr(leftExpr35, "i", Type.INT);
-//		Expr rightExpr36 = ((BinaryExpr) guard34).getRightExpr();
-//		checkNumLitExpr(rightExpr36, 0);
-//		Block block37 = guardedBlock33.getBlock();
-//		List<BlockElem> blockElemList38 = block37.getElems();
-//		assertEquals(3, blockElemList38.size());
-//		BlockElem blockElem39 = blockElemList38.get(0);
-//		checkDec(blockElem39);
-//		NameDef nameDef40 = ((Declaration) blockElem39).getNameDef();
-//		checkNameDef(nameDef40, Type.IMAGE, "xx");
-//		Expr expr41 = ((Declaration) blockElem39).getInitializer();
-//		checkStringLitExpr(expr41, "url");
-//		BlockElem blockElem42 = blockElemList38.get(1);
-//		assertThat("", blockElem42, instanceOf(WriteStatement.class));
-//		Expr writeStatementExpr43 = ((WriteStatement) blockElem42).getExpr();
-//		checkIdentExpr(writeStatementExpr43, "xx", Type.IMAGE);
-//		BlockElem blockElem44 = blockElemList38.get(2);
-//		assertThat("", blockElem44, instanceOf(AssignmentStatement.class));
-//		LValue LValue45 = ((AssignmentStatement) blockElem44).getlValue();
-//		assertThat("", LValue45, instanceOf(LValue.class));
-//		String name46 = LValue45.getName();
-//		assertEquals("i", name46);
-//		assertNull(LValue45.getPixelSelector());
-//		assertNull(LValue45.getChannelSelector());
-//		Expr expr47 = ((AssignmentStatement) blockElem44).getE();
-//		checkBinaryExpr(expr47, Kind.MINUS, Type.INT);
-//		Expr leftExpr48 = ((BinaryExpr) expr47).getLeftExpr();
-//		checkIdentExpr(leftExpr48, "i", Type.INT);
-//		Expr rightExpr49 = ((BinaryExpr) expr47).getRightExpr();
-//		checkNumLitExpr(rightExpr49, 1);
-//		BlockElem blockElem50 = blockElemList4.get(4);
-//		assertThat("", blockElem50, instanceOf(ReturnStatement.class));
-//		Expr returnValueExpr51 = ((ReturnStatement) blockElem50).getE();
-//		checkIdentExpr(returnValueExpr51, "i", Type.INT);
-//	}
+	@Test
+	void test15() throws PLCCompilerException {
+		String input = """
+				int f(int xx)<:
+				int i = 3;
+				do i > 0 -> <:
+				   string xx = "hello";
+				   write xx;
+				   i = i -1;
+				:>
+				od;
+				i = 3;
+				do i > 0 -> <:
+				   image xx = "url";
+				   write xx;
+				   i = i -1;
+				:>
+				od;
+				^i;
+				:>
+				""";
+		AST ast = getDecoratedAST(input);
+		Program program0 = checkProgram(ast, Type.INT, "f");
+		List<NameDef> params1 = program0.getParams();
+		assertEquals(1, params1.size());
+		NameDef paramNameDef2 = params1.get(0);
+		checkNameDef(paramNameDef2, Type.INT, "xx");
+		Block programBlock3 = ((Program) ast).getBlock();
+		List<BlockElem> blockElemList4 = programBlock3.getElems();
+		assertEquals(5, blockElemList4.size());
+		BlockElem blockElem5 = blockElemList4.get(0);
+		checkDec(blockElem5);
+		NameDef nameDef6 = ((Declaration) blockElem5).getNameDef();
+		checkNameDef(nameDef6, Type.INT, "i");
+		Expr expr7 = ((Declaration) blockElem5).getInitializer();
+		checkNumLitExpr(expr7, 3);
+		BlockElem blockElem8 = blockElemList4.get(1);
+		assertThat("", blockElem8, instanceOf(DoStatement.class));
+		List<GuardedBlock> guardedBlocks9 = ((DoStatement) blockElem8).getGuardedBlocks();
+		assertEquals(1, guardedBlocks9.size());
+		GuardedBlock guardedBlock10 = guardedBlocks9.get(0);
+		assertThat("", guardedBlock10, instanceOf(GuardedBlock.class));
+		Expr guard11 = guardedBlock10.getGuard();
+		checkBinaryExpr(guard11, Kind.GT, Type.BOOLEAN);
+		Expr leftExpr12 = ((BinaryExpr) guard11).getLeftExpr();
+		checkIdentExpr(leftExpr12, "i", Type.INT);
+		Expr rightExpr13 = ((BinaryExpr) guard11).getRightExpr();
+		checkNumLitExpr(rightExpr13, 0);
+		Block block14 = guardedBlock10.getBlock();
+		List<BlockElem> blockElemList15 = block14.getElems();
+		assertEquals(3, blockElemList15.size());
+		BlockElem blockElem16 = blockElemList15.get(0);
+		checkDec(blockElem16);
+		NameDef nameDef17 = ((Declaration) blockElem16).getNameDef();
+		checkNameDef(nameDef17, Type.STRING, "xx");
+		Expr expr18 = ((Declaration) blockElem16).getInitializer();
+		checkStringLitExpr(expr18, "hello");
+		BlockElem blockElem19 = blockElemList15.get(1);
+		assertThat("", blockElem19, instanceOf(WriteStatement.class));
+		Expr writeStatementExpr20 = ((WriteStatement) blockElem19).getExpr();
+		checkIdentExpr(writeStatementExpr20, "xx", Type.STRING);
+		BlockElem blockElem21 = blockElemList15.get(2);
+		assertThat("", blockElem21, instanceOf(AssignmentStatement.class));
+		LValue LValue22 = ((AssignmentStatement) blockElem21).getlValue();
+		assertThat("", LValue22, instanceOf(LValue.class));
+		String name23 = LValue22.getName();
+		assertEquals("i", name23);
+		assertNull(LValue22.getPixelSelector());
+		assertNull(LValue22.getChannelSelector());
+		Expr expr24 = ((AssignmentStatement) blockElem21).getE();
+		checkBinaryExpr(expr24, Kind.MINUS, Type.INT);
+		Expr leftExpr25 = ((BinaryExpr) expr24).getLeftExpr();
+		checkIdentExpr(leftExpr25, "i", Type.INT);
+		Expr rightExpr26 = ((BinaryExpr) expr24).getRightExpr();
+		checkNumLitExpr(rightExpr26, 1);
+		BlockElem blockElem27 = blockElemList4.get(2);
+		assertThat("", blockElem27, instanceOf(AssignmentStatement.class));
+		LValue LValue28 = ((AssignmentStatement) blockElem27).getlValue();
+		assertThat("", LValue28, instanceOf(LValue.class));
+		String name29 = LValue28.getName();
+		assertEquals("i", name29);
+		assertNull(LValue28.getPixelSelector());
+		assertNull(LValue28.getChannelSelector());
+		Expr expr30 = ((AssignmentStatement) blockElem27).getE();
+		checkNumLitExpr(expr30, 3);
+		BlockElem blockElem31 = blockElemList4.get(3);
+		assertThat("", blockElem31, instanceOf(DoStatement.class));
+		List<GuardedBlock> guardedBlocks32 = ((DoStatement) blockElem31).getGuardedBlocks();
+		assertEquals(1, guardedBlocks32.size());
+		GuardedBlock guardedBlock33 = guardedBlocks32.get(0);
+		assertThat("", guardedBlock33, instanceOf(GuardedBlock.class));
+		Expr guard34 = guardedBlock33.getGuard();
+		checkBinaryExpr(guard34, Kind.GT, Type.BOOLEAN);
+		Expr leftExpr35 = ((BinaryExpr) guard34).getLeftExpr();
+		checkIdentExpr(leftExpr35, "i", Type.INT);
+		Expr rightExpr36 = ((BinaryExpr) guard34).getRightExpr();
+		checkNumLitExpr(rightExpr36, 0);
+		Block block37 = guardedBlock33.getBlock();
+		List<BlockElem> blockElemList38 = block37.getElems();
+		assertEquals(3, blockElemList38.size());
+		BlockElem blockElem39 = blockElemList38.get(0);
+		checkDec(blockElem39);
+		NameDef nameDef40 = ((Declaration) blockElem39).getNameDef();
+		checkNameDef(nameDef40, Type.IMAGE, "xx");
+		Expr expr41 = ((Declaration) blockElem39).getInitializer();
+		checkStringLitExpr(expr41, "url");
+		BlockElem blockElem42 = blockElemList38.get(1);
+		assertThat("", blockElem42, instanceOf(WriteStatement.class));
+		Expr writeStatementExpr43 = ((WriteStatement) blockElem42).getExpr();
+		checkIdentExpr(writeStatementExpr43, "xx", Type.IMAGE);
+		BlockElem blockElem44 = blockElemList38.get(2);
+		assertThat("", blockElem44, instanceOf(AssignmentStatement.class));
+		LValue LValue45 = ((AssignmentStatement) blockElem44).getlValue();
+		assertThat("", LValue45, instanceOf(LValue.class));
+		String name46 = LValue45.getName();
+		assertEquals("i", name46);
+		assertNull(LValue45.getPixelSelector());
+		assertNull(LValue45.getChannelSelector());
+		Expr expr47 = ((AssignmentStatement) blockElem44).getE();
+		checkBinaryExpr(expr47, Kind.MINUS, Type.INT);
+		Expr leftExpr48 = ((BinaryExpr) expr47).getLeftExpr();
+		checkIdentExpr(leftExpr48, "i", Type.INT);
+		Expr rightExpr49 = ((BinaryExpr) expr47).getRightExpr();
+		checkNumLitExpr(rightExpr49, 1);
+		BlockElem blockElem50 = blockElemList4.get(4);
+		assertThat("", blockElem50, instanceOf(ReturnStatement.class));
+		Expr returnValueExpr51 = ((ReturnStatement) blockElem50).getE();
+		checkIdentExpr(returnValueExpr51, "i", Type.INT);
+	}
 
 	@Test
 	void test16() throws PLCCompilerException {

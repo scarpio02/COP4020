@@ -10,6 +10,8 @@ public class TypeCheckVisitor implements ASTVisitor {
     SymbolTable st;
     Program root;
 
+    boolean isSpecialCase = false;
+
     public TypeCheckVisitor() {
         st = new SymbolTable();
     }
@@ -46,6 +48,10 @@ public class TypeCheckVisitor implements ASTVisitor {
         Type typeL = (Type) assignmentStatement.getlValue().visit(this, arg);
         Type typeE = (Type) assignmentStatement.getE().visit(this, arg);
         AssignmentCompatible(typeL, typeE);
+        if (isSpecialCase) {
+            st.leaveScope();
+            isSpecialCase = false;
+        }
         st.leaveScope();
         return assignmentStatement; //FIXME: I'm not sure what's best to return here
     }
@@ -177,7 +183,7 @@ public class TypeCheckVisitor implements ASTVisitor {
             typeE = (Type) declaration.getInitializer().visit(this, arg);
         }
         Type typeN = (Type) declaration.getNameDef().visit(this, arg);
-        if (declaration.getInitializer() == null || typeE == typeN || typeE == Type.STRING && typeN == Type.IMAGE) {
+        if (declaration.getInitializer() == null || typeE == typeN || (typeE == Type.STRING && typeN == Type.IMAGE)) {
             return typeN;
         }
         throw new TypeCheckException("Invalid types for for declaration");
@@ -254,8 +260,12 @@ public class TypeCheckVisitor implements ASTVisitor {
     //        Condition: symbolTable.lookup(IdentExpr.name) defined
     //        IdentExpr.nameDef <- symbolTable.lookup(IdentExpr.name)
     //        IdentExpr.type <- IdentExpr.nameDef.type
-        identExpr.setNameDef(st.lookup(identExpr.getName()));
-        Type type = (Type) identExpr.getNameDef().visit(this, arg);
+        NameDef nd = st.lookup(identExpr.getName());
+        if (nd == null) {
+            throw new TypeCheckException(identExpr.getName() + " is not defined in scope");
+        }
+        identExpr.setNameDef(nd);
+        Type type = identExpr.getNameDef().getType();//(Type) identExpr.getNameDef().visit(this, arg);
         identExpr.setType(type);
         return type;
 
@@ -307,6 +317,9 @@ public class TypeCheckVisitor implements ASTVisitor {
     //        Condition: inferLValueType is defined
     //        LValue.type <- inferLValueType
         NameDef nd = st.lookup(lValue.getName());
+        if (nd == null) {
+            throw new TypeCheckException(lValue.getName() + " is not defined in scope");
+        }
         nd.visit(this, arg);
         lValue.setNameDef(nd);
         if (lValue.getPixelSelector() != null) {
@@ -384,8 +397,12 @@ public class TypeCheckVisitor implements ASTVisitor {
     //        end if
     //        Condition: Expr[xExpr].type == INT
     //        Condition: Expr[yExpr].type == INT
-
         if (arg instanceof LValue) {
+            if (((pixelSelector.xExpr() instanceof IdentExpr) && (st.lookup(((IdentExpr) pixelSelector.xExpr()).getName()) == null)) ||
+                    ((pixelSelector.yExpr() instanceof IdentExpr) && (st.lookup(((IdentExpr) pixelSelector.yExpr()).getName()) == null))) {
+                st.enterScope();
+                isSpecialCase = true;
+            }
             if (pixelSelector.xExpr() instanceof IdentExpr || pixelSelector.xExpr() instanceof NumLitExpr)
             {
                 if ((pixelSelector.xExpr() instanceof IdentExpr) && (st.lookup(((IdentExpr) pixelSelector.xExpr()).getName()) == null)) {
@@ -435,11 +452,17 @@ public class TypeCheckVisitor implements ASTVisitor {
         /*
         PostfixExpr::= Expr PixelSelector? ChannelSelector?
             Condition: inferPostfixExprType is defined
-            PostfixExpr.type  inferPostfixExprType(Epxr.type, PixelSelector, ChannelSelector)
+            PostfixExpr.type <- inferPostfixExprType(Epxr.type, PixelSelector, ChannelSelector)
         */
         Type typeE = (Type) postfixExpr.primary().visit(this, arg);
         Type type = inferPostfixExprType(typeE, postfixExpr.pixel(), postfixExpr.channel());
         postfixExpr.setType(type);
+        if (postfixExpr.pixel() != null) {
+            postfixExpr.pixel().visit(this, arg);
+        }
+        if (postfixExpr.channel() != null) {
+            postfixExpr.channel().visit(this, arg);
+        }
         return type;
     }
 
@@ -540,7 +563,7 @@ public class TypeCheckVisitor implements ASTVisitor {
 //        ConstExpr
 //          ConstExpr.type <- if (ConstExpr.name == ‘Z’) INT else PIXEL
         Type type = Type.PIXEL;
-        if (constExpr.getName() == "Z") {
+        if (constExpr.getName().equals("Z")) {
             type = Type.INT;
         }
         constExpr.setType(type);

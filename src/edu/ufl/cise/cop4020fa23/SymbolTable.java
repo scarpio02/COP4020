@@ -59,7 +59,7 @@ public class SymbolTable {
         if (symbol_table.containsKey(name)) {
             Entry currE = symbol_table.get(name);
             while (currE != null) {
-                if (currE.scopeID <= current_num) { //FIXME: Not right
+                if (scope_stack.search(currE.scopeID) != -1) {
                     return currE.nameDef;
                 }
                 else {
