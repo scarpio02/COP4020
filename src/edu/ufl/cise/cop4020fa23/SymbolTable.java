@@ -56,21 +56,18 @@ public class SymbolTable {
         }
     }
     NameDef lookup(String name) throws TypeCheckException {
-        if (!symbol_table.containsKey(name)) {
-            throw new TypeCheckException(name + " is not defined");
-        }
-        else {
+        if (symbol_table.containsKey(name)) {
             Entry currE = symbol_table.get(name);
             while (currE != null) {
-                if (currE.scopeID <= current_num) {
+                if (currE.scopeID <= current_num) { //FIXME: Not right
                     return currE.nameDef;
                 }
                 else {
                     currE = currE.link;
                 }
             }
-            throw new TypeCheckException(name + " is not defined in current scope");
         }
+        return null;
 
     }
 }

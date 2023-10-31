@@ -21,9 +21,33 @@ public class TypeCheckVisitor implements ASTVisitor {
         }
     }
 
+    void AssignmentCompatible(Type typeL, Type typeE) throws TypeCheckException {
+        if (typeL == typeE ||
+                (typeL == Type.PIXEL && typeE == Type.INT) ||
+                (typeL == Type.IMAGE && typeE == Type.PIXEL) ||
+                (typeL == Type.IMAGE && typeE == Type.INT) ||
+                (typeL == Type.IMAGE && typeE == Type.STRING)) {
+            return;
+        }
+
+        throw new TypeCheckException("Assignment statement types are incompatible");
+
+    }
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitAssignmentStatement invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitAssignmentStatement invoked.");
+//        AssignmentStatement ::= LValue[lValue] Expr[e]
+    //        symbolTable.enterScope()
+    //        visit children to check condition
+    //        Condition: AssignmentCompatible (LValue.type, Expr.type)
+    //        symbolTable.leaveScope()
+
+        st.enterScope();
+        Type typeL = (Type) assignmentStatement.getlValue().visit(this, arg);
+        Type typeE = (Type) assignmentStatement.getE().visit(this, arg);
+        AssignmentCompatible(typeL, typeE);
+        st.leaveScope();
+        return assignmentStatement; //FIXME: I'm not sure what's best to return here
     }
 
     Type inferBinaryType(Type l, Kind op, Type r) throws TypeCheckException {
@@ -179,7 +203,13 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitDoStatement invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitDoStatement invoked.");
+        //DoStatement ::= GuardedBlock+
+        List<GuardedBlock> guardedBlocks = doStatement.getGuardedBlocks();
+        for (GuardedBlock gb : guardedBlocks) {
+            gb.visit(this, arg);
+        }
+        return doStatement; //FIXME: I'm not sure what's best to return here
     }
 
     @Override
@@ -206,7 +236,15 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitGuardedBlock invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitGuardedBlock invoked.");
+        /*
+        GuardedBlock := Expr[Guard] Block[block]
+            Condition: Expr.type == BOOLEAN
+        */
+        Type typeE = (Type) guardedBlock.getGuard().visit(this, arg);
+        check(typeE == Type.BOOLEAN, guardedBlock, "Guarded block guard must be boolean");
+        guardedBlock.getBlock().visit(this, arg);
+        return typeE; //FIXME: I'm not sure what's best to return here
     }
 
     @Override
@@ -225,12 +263,65 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitIfStatement invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitIfStatement invoked.");
+        //IfStatement ::= GuardedBlock+
+        List<GuardedBlock> guardedBlocks = ifStatement.getGuardedBlocks();
+        for (GuardedBlock gb : guardedBlocks) {
+            gb.visit(this, arg);
+        }
+        return ifStatement; //FIXME: I'm not sure what's best to return here
+
     }
 
+    Type inferLValueType(Type varType, PixelSelector ps, ChannelSelector cs) throws TypeCheckException {
+        if (ps == null && cs == null) {
+            return varType;
+        }
+        if (varType == Type.IMAGE) {
+            if (ps != null && cs == null) {
+                return Type.PIXEL;
+            }
+            else if (ps != null && cs != null) {
+                return Type.INT;
+            }
+            else if (ps == null && cs != null) {
+                return Type.IMAGE;
+            }
+        }
+        if (varType == Type.PIXEL) {
+            if (ps == null && cs != null) {
+                return Type.INT;
+            }
+        }
+        throw new TypeCheckException("invalid LValue var type");
+
+    }
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitLValue invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitLValue invoked.");
+//        LValue ::= IDENT[nameToken] PixelSelector? ChannelSelector?
+//            LValue.nameDef <- symbolTable.lookup(name)
+    //        LValue.varType <- LValue.nameDef.type
+    //        Condition: if (PixelSelector != null) LValue.varType == IMAGE
+    //        Condition: if (ChannelSelector != null) LValue.varType ∈ { PIXEL, IMAGE}
+    //        Condition: inferLValueType is defined
+    //        LValue.type <- inferLValueType
+        NameDef nd = st.lookup(lValue.getName());
+        nd.visit(this, arg);
+        lValue.setNameDef(nd);
+        if (lValue.getPixelSelector() != null) {
+            check(lValue.getVarType() == Type.IMAGE, lValue, "LValue var type must be image");
+            lValue.getPixelSelector().visit(this, lValue);
+        }
+        if (lValue.getChannelSelector() != null) {
+            if(lValue.getVarType() != Type.IMAGE && lValue.getVarType() != Type.PIXEL) {
+                throw new TypeCheckException("LValue var type must be image or pixel");
+            }
+            lValue.getChannelSelector().visit(this, arg);
+        }
+        Type type = inferLValueType(lValue.getVarType(), lValue.getPixelSelector(), lValue.getChannelSelector());
+        lValue.setType(type);
+        return type;
     }
 
     @Override
@@ -277,7 +368,46 @@ public class TypeCheckVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitPixelSelector invoked.");
+        //throw new UnsupportedOperationException("Unimplemented Method ASTVisitor.visitPixelSelector invoked.");
+//        PixelSelector ::= Expr[xExpr] Expr[yExpr]
+    //        If the PixelSelector’s parent is an LValue then
+        //        Condition: Expr[xExpr] is an IdentExp or NumLitExpr
+        //        Condition: Expr[yExpr] is an IdentExp or NumLitExpr
+        //        If Expr[xExpr] is an IdentExp and symbolTable.lookup(Expr[xExpr].name == null)
+            //        Insert a SyntheticNameDef with name Expr[xExpr].name
+            //        and type INT into the symbol table
+        //        end if`
+        //        If Expr[yExpr] is an IdentExp and symbolTable.lookup(Expr[yExpr].name == null)
+            //        Insert a SyntheticNameDef with name Expr[yExpr].name
+            //        and type INT into the symbol table
+        //        end if
+    //        end if
+    //        Condition: Expr[xExpr].type == INT
+    //        Condition: Expr[yExpr].type == INT
+
+        if (arg instanceof LValue) {
+            if (pixelSelector.xExpr() instanceof IdentExpr || pixelSelector.xExpr() instanceof NumLitExpr)
+            {
+                if ((pixelSelector.xExpr() instanceof IdentExpr) && (st.lookup(((IdentExpr) pixelSelector.xExpr()).getName()) == null)) {
+                    NameDef nd = new SyntheticNameDef(((IdentExpr) pixelSelector.xExpr()).getName());
+                    nd.setType(Type.INT);
+                    st.insert(nd);
+                }
+            }
+            if (pixelSelector.yExpr() instanceof IdentExpr || pixelSelector.yExpr() instanceof NumLitExpr)
+            {
+                if ((pixelSelector.yExpr() instanceof IdentExpr) && (st.lookup(((IdentExpr) pixelSelector.yExpr()).getName()) == null)) {
+                    NameDef nd = new SyntheticNameDef(((IdentExpr) pixelSelector.yExpr()).getName());
+                    nd.setType(Type.INT);
+                    st.insert(nd);
+                }
+            }
+        }
+        Type typeX = (Type) pixelSelector.xExpr().visit(this, arg);
+        check(typeX == Type.INT, pixelSelector, "Pixel selector X must be int");
+        Type typeY = (Type) pixelSelector.yExpr().visit(this, arg);
+        check(typeY == Type.INT, pixelSelector, "Pixel selector Y must be int");
+        return  pixelSelector; //FIXME: I'm not sure what's best to return here
     }
 
     Type inferPostfixExprType(Type e, PixelSelector ps, ChannelSelector cs) throws TypeCheckException {
