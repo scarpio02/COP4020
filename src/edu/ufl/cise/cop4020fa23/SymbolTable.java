@@ -38,7 +38,6 @@ public class SymbolTable {
         current_num = scope_stack.pop();
     }
 
-    //FIXME: Infinite looping in symbol table. MUST FIX!!!!!!!!!!
     void insert(NameDef name) throws TypeCheckException {
         if (symbol_table.containsKey(name.getName())) {
             for (int i = 0; i < symbol_table.get(name.getName()).size(); i++)
