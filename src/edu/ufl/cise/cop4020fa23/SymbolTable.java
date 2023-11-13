@@ -39,6 +39,9 @@ public class SymbolTable {
     }
 
     void insert(NameDef name) throws TypeCheckException {
+        StringBuilder javaName = null;
+        javaName.append(name.getName() + "$" + current_num);
+        name.setJavaName(javaName.toString());
         if (symbol_table.containsKey(name.getName())) {
             for (int i = 0; i < symbol_table.get(name.getName()).size(); i++)
             {
