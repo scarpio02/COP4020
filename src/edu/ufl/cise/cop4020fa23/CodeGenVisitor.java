@@ -21,8 +21,34 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBinaryExpr(BinaryExpr binaryExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitBinaryExpr not implemented in CodeGenVisitor");
-        //return null;
+//        If Expr[leftExpr].type is string and op is EQ
+//              _Expr[leftExpr]_ .equals( _Expr[rigthExpr]_ )
+//        If op is EXP
+//              ((int)Math.round(Math.pow( _Expr[leftExpr]_ , _Expr[rigthExpr]_ ))
+//        Otherwise
+//                (_Expr[leftExpr]_ _op_ _Expr[rigthExpr]_)
+
+        if (binaryExpr.getLeftExpr().getType() == Type.STRING && binaryExpr.getOpKind() == Kind.EQ) {
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(".equals(");
+            binaryExpr.getRightExpr().visit(this, arg);
+        }
+        else if (binaryExpr.getOpKind() == Kind.EXP) {
+            javaCode.append("((int)Math.round(Math.pow(");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(",");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else {
+            javaCode.append("(");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(" ").append(binaryExpr.getOp().text()).append(" ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append(")");
+        }
+
+        return javaCode.toString();
     }
 
     @Override
@@ -36,8 +62,8 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("\n");
         }
         javaCode.append("\t}\n");
-        //throw new UnsupportedOperationException("visitBlock not implemented in CodeGenVisitor");
-        return javaCode;
+
+        return javaCode.toString();
     }
 
     @Override
@@ -54,22 +80,32 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConditionalExpr(ConditionalExpr conditionalExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitConditionalExpr not implemented in CodeGenVisitor");
-        //return null;
+//        ( _Expr[GuardExpr]_ ? _Expr[TrueExpr]_ : _Expr[FalseExpr]_ )
+
+        javaCode.append("(");
+        conditionalExpr.getGuardExpr().visit(this, arg);
+        javaCode.append(" ? ");
+        conditionalExpr.getTrueExpr().visit(this, arg);
+        javaCode.append(" : ");
+        conditionalExpr.getFalseExpr().visit(this, arg);
+        javaCode.append(")");
+
+        return javaCode.toString();
     }
 
     @Override
     public Object visitDeclaration(Declaration declaration, Object arg) throws PLCCompilerException {
 //        Declaration::= NameDef _NameDef_
 //        Declaration::= NameDef Expr _NameDef_ = _Expr_
+
         declaration.getNameDef().visit(this, arg);
         if (declaration.getInitializer() != null) {
             javaCode.append(" = ");
             declaration.getInitializer().visit(this, arg);
         }
         javaCode.append(";\n");
-        //throw new UnsupportedOperationException("visitDeclaration not implemented in CodeGenVisitor");
-        return javaCode;
+
+        return javaCode.toString();
     }
 
     @Override
@@ -98,8 +134,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIdentExpr(IdentExpr identExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitIdentExpr not implemented in CodeGenVisitor");
-        //return null;
+//        _IdentExpr_.getNameDef().getJavaName()
+
+        javaCode.append(identExpr.getNameDef().getJavaName());
+
+        return javaCode.toString();
     }
 
     @Override
@@ -126,16 +165,18 @@ public class CodeGenVisitor implements ASTVisitor {
         else {
             javaCode.append(type.toString().toLowerCase());
         }
-        javaCode.append(" " + nameDef.getJavaName());
+        javaCode.append(" ").append(nameDef.getJavaName());
 
-        //throw new UnsupportedOperationException("visitNameDef not implemented in CodeGenVisitor");
-        return javaCode;
+        return javaCode.toString();
     }
 
     @Override
     public Object visitNumLitExpr(NumLitExpr numLitExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitNumLitExpr not implemented in CodeGenVisitor");
-        //return null;
+//        _NumLitExpr_.getText
+
+        javaCode.append(numLitExpr.getText());
+
+        return javaCode.toString();
     }
 
     @Override
@@ -159,7 +200,7 @@ public class CodeGenVisitor implements ASTVisitor {
 //        }
 //        Note: parameters from _NameDef*_ are separated by commas
 
-        javaCode.append("public class " + program.getName() + " {\n");
+        javaCode.append("public class ").append(program.getName()).append(" {\n");
         javaCode.append("\tpublic static ");
         Type type = program.getType();
         if (type == Type.STRING) {
@@ -181,8 +222,7 @@ public class CodeGenVisitor implements ASTVisitor {
         program.getBlock().visit(this, arg);
         javaCode.append("\n}");
 
-        //throw new UnsupportedOperationException("visitProgram not implemented in CodeGenVisitor");
-        return javaCode;
+        return javaCode.toString();
     }
 
     @Override
@@ -193,14 +233,28 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitStringLitExpr(StringLitExpr stringLitExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitStringLitExpr not implemented in CodeGenVisitor");
-        //return null;
+//        _StringLitExpr_.getText
+        javaCode.append(stringLitExpr.getText());
+
+        return javaCode.toString();
     }
 
     @Override
     public Object visitUnaryExpr(UnaryExpr unaryExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitUnaryExpr not implemented in CodeGenVisitor");
-        //return null;
+        // ( _op_ _Expr_ )
+
+        javaCode.append("(");
+        Kind op = unaryExpr.getOp();
+        if (op == Kind.BANG) {
+            javaCode.append("!");
+        }
+        else if (op == Kind.MINUS) {
+            javaCode.append("-");
+        }
+        unaryExpr.getExpr().visit(this, arg);
+        javaCode.append(")");
+
+        return javaCode.toString();
     }
 
     @Override
@@ -211,8 +265,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitBooleanLitExpr(BooleanLitExpr booleanLitExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitBooleanLitExpr not implemented in CodeGenVisitor");
-        //return null;
+//        true or false
+
+        javaCode.append(booleanLitExpr.getText().toLowerCase());
+
+        return javaCode.toString();
     }
 
     @Override
