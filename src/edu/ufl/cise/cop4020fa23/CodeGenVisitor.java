@@ -15,8 +15,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitAssignmentStatement not implemented in CodeGenVisitor");
-        //return null;
+//        _LValue_ = _Expr_
+
+        assignmentStatement.getlValue().visit(this, arg);
+        javaCode.append(" = ");
+        assignmentStatement.getE().visit(this, arg);
+
+        return javaCode.toString();
     }
 
     @Override
@@ -59,17 +64,20 @@ public class CodeGenVisitor implements ASTVisitor {
         for (Block.BlockElem elem : blockElems) {
             javaCode.append("\t\t");
             elem.visit(this, arg);
-            javaCode.append("\n");
+            javaCode.append(";\n");
         }
-        javaCode.append("\t}\n");
+        javaCode.append("\t}");
 
         return javaCode.toString();
     }
 
     @Override
     public Object visitBlockStatement(StatementBlock statementBlock, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitBlockStatement not implemented in CodeGenVisitor");
-        //return null;
+//        _Block_
+
+        statementBlock.getBlock().visit(this, arg);
+
+        return javaCode.toString();
     }
 
     @Override
@@ -103,7 +111,7 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append(" = ");
             declaration.getInitializer().visit(this, arg);
         }
-        javaCode.append(";\n");
+
 
         return javaCode.toString();
     }
@@ -149,8 +157,11 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitLValue(LValue lValue, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitLValue not implemented in CodeGenVisitor");
-        //return null;
+//        _IdentExpr_.getNameDef().getJavaName()
+
+        javaCode.append(lValue.getNameDef().getJavaName());
+
+        return javaCode.toString();
     }
 
     @Override
@@ -227,8 +238,12 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitReturnStatement(ReturnStatement returnStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitReturnStatement not implemented in CodeGenVisitor");
-        //return null;
+//        return _Expr_
+
+        javaCode.append("return ");
+        returnStatement.getE().visit(this, arg);
+
+        return javaCode.toString();
     }
 
     @Override
@@ -259,8 +274,14 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitWriteStatement not implemented in CodeGenVisitor");
-        //return null;
+//        ConsoleIO.write( _Expr_ )
+//        Note: you will need to import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO
+        javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO\n");
+        javaCode.append("(");
+        writeStatement.getExpr().visit(this, arg);
+        javaCode.append(")");
+
+        return javaCode.toString();
     }
 
     @Override
