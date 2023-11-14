@@ -40,6 +40,8 @@ public class CodeGenVisitor implements ASTVisitor {
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(".equals(");
             binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append(")");
+
         }
         else if (binaryExpr.getOpKind() == Kind.EXP) {
             javaCode.append("((int)Math.round(Math.pow(");

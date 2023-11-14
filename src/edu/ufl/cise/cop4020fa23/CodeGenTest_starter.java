@@ -386,4 +386,198 @@ class CodeGenTest_starter {
 		show(result);
 		assertEquals(a + " " + b, result);		
 	}
+
+	// All tests below were written and shared by classmates
+	@Test
+	void cg0x() throws Exception {
+		String input = "void f()<::>";
+		Object result = PLCLangExec.runCode("", input);
+		show(result);
+		assertNull(result);
+	}
+
+
+	@Test
+	void unitTestBooleanLit() throws Exception {
+		String input = """
+                boolean func()
+                <: ^ FALSE;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(false, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestLogicOr() throws Exception {
+		String input = """
+                boolean func()
+                <: ^ FALSE || TRUE;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(true, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestLogicAnd() throws Exception {
+		String input = """
+                boolean func()
+                <: ^ FALSE && TRUE;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(false, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestNestedExpression() throws Exception {
+		String input = """
+                int func()
+                <: ^ (2 + 4)  * 3;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(18, (int)result);
+	}
+
+
+	@Test
+	void unitTestExponentialExpression() throws Exception {
+		String input = """
+                int func()
+                <: ^ 2 ** 3;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(8, (int)result);
+	}
+
+
+	@Test
+	void unitTestStringEquals() throws Exception {
+		String input = """
+                boolean func(string greeting)
+                <: ^ greeting == "hello";
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input, "hello");
+		assertEquals(true, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestNumLitEquals() throws Exception {
+		String input = """
+                boolean func(int i)
+                <: ^ i == 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input, 2);
+		assertEquals(true, (boolean)result);
+	}
+
+
+	@Test
+	void cg26() throws Exception {
+		String input = """
+      int f()
+      <:
+        int r = 0;
+        int i = 1;
+        <:
+          int s = 0;
+          <:
+            i = 7;
+            <:
+              s = i + r;
+            :>;
+            r = r + s;
+          :>;
+        :>;
+     s = i;
+        ^r;
+      :>
+      """;
+
+		assertThrows(PLCCompilerException.class, () -> {
+			Object result = PLCLangExec.runCode(packageName,input);
+		});
+	}
+
+	@Test
+	void unitTestDivisionExpression() throws Exception{
+		String input = """
+                int func()
+                <: ^ 4 / 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(2, (int)result);
+	}
+
+
+	@Test
+	void unitTestModExpression() throws Exception{
+		String input = """
+                int func()
+                <: ^ 4 % 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(0, (int)result);
+	}
+
+
+	@Test
+	void unitTestComparisonExpression() throws Exception{
+		String input = """
+                boolean func()
+                <: ^ 4 > 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(true, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestComparisonExpression2() throws Exception{
+		String input = """
+                boolean func()
+                <: ^ 4 < 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(false, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestComparisonExpression3() throws Exception{
+		String input = """
+                boolean func()
+                <: ^ 4 >= 2;
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(true, (boolean)result);
+	}
+
+
+	@Test
+	void unitTestComparisonExpression4() throws Exception{
+		String input = """
+                boolean func()
+                <: ^ 4 <= 2; 
+                :>
+                """;
+		Object result = PLCLangExec.runCode(packageName,input);
+		assertEquals(false, (boolean)result);
+	}
+
+
 }
