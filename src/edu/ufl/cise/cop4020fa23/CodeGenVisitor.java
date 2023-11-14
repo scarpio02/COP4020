@@ -9,8 +9,11 @@ import java.util.List;
 public class CodeGenVisitor implements ASTVisitor {
 
     StringBuilder javaCode;
+
+    boolean importConsoleIO;
     public CodeGenVisitor() {
         javaCode = new StringBuilder();
+        importConsoleIO = false;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class CodeGenVisitor implements ASTVisitor {
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(",");
             binaryExpr.getRightExpr().visit(this, arg);
-            javaCode.append("))");
+            javaCode.append(")))");
         }
         else {
             javaCode.append("(");
@@ -210,7 +213,6 @@ public class CodeGenVisitor implements ASTVisitor {
 //            ) _Block
 //        }
 //        Note: parameters from _NameDef*_ are separated by commas
-
         javaCode.append("public class ").append(program.getName()).append(" {\n");
         javaCode.append("\tpublic static ");
         Type type = program.getType();
@@ -232,6 +234,16 @@ public class CodeGenVisitor implements ASTVisitor {
         javaCode.append(") ");
         program.getBlock().visit(this, arg);
         javaCode.append("\n}");
+        if (importConsoleIO)
+        {
+            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
+        }
+        if (arg != null && arg != "")
+        {
+            //javaCode.append("package ").append(arg).append(";\n");
+            javaCode.insert(0, "package " + arg + ";\n");
+        }
+
 
         return javaCode.toString();
     }
@@ -276,8 +288,10 @@ public class CodeGenVisitor implements ASTVisitor {
     public Object visitWriteStatement(WriteStatement writeStatement, Object arg) throws PLCCompilerException {
 //        ConsoleIO.write( _Expr_ )
 //        Note: you will need to import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO
-        javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO\n");
-        javaCode.append("(");
+        //javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
+
+        importConsoleIO = true;
+        javaCode.append("ConsoleIO.write(");
         writeStatement.getExpr().visit(this, arg);
         javaCode.append(")");
 
