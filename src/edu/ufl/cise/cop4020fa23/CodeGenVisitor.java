@@ -1,9 +1,11 @@
 package edu.ufl.cise.cop4020fa23;
 
 import edu.ufl.cise.cop4020fa23.ast.*;
+import edu.ufl.cise.cop4020fa23.ast.Dimension;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
 
+import java.awt.*;
 import java.util.List;
 
 public class CodeGenVisitor implements ASTVisitor {
@@ -322,13 +324,26 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
         }
+        if (importFileURLIO)
+        {
+            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;\n");
+        }
+        if (importImageOps)
+        {
+            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ImageOps;\n");
+        }
+        if (importPixelOps)
+        {
+            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.PixelOps;\n");
+        }
+        if (importPLCRuntimeException)
+        {
+            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.PLCRuntimeException;\n");
+        }
         if (arg != null && arg != "")
         {
-            //javaCode.append("package ").append(arg).append(";\n");
             javaCode.insert(0, "package " + arg + ";\n");
         }
-
-
         return javaCode.toString();
     }
 
@@ -398,7 +413,54 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitConstExpr(ConstExpr constExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitConstExpr not implemented in CodeGenVisitor");
-        //return null;
+        /*
+        If ConsExpr.name = Z then 255
+        else get hex String literal representing the
+        RGB representation of the corresponding
+        java.awt.Color.
+
+        Example:
+        Let the PLC Lang constant be BLUE.
+        This corresponds to the java Color constant
+        java.awt.Color.BLUE.
+
+        Get the packed pixel version of the color with
+        getRGB()
+
+        Convert to a String with Integer.toHexString
+
+        Prepend “0x” to make it a Java hex literal.
+
+        Putting it all together, you get
+        "0x" +
+        Integer.toHexString(Color.BLUE.getRGB())
+
+        Which is
+        0xff0000ff
+         */
+
+        if (constExpr.getName() == "Z") {
+            javaCode.append("255");
+        }
+        else { //BLACK | BLUE | CYAN | DARK_GRAY | GRAY | GREEN | LIGHT_GRAY | MAGENTA | ORANGE | PINK | RED | WHITE | YELLOW
+            String hex = switch (constExpr.getName()) {
+                case "BLACK" -> "0x" + Integer.toHexString(Color.BLACK.getRGB());
+                case "BLUE" -> "0x" + Integer.toHexString(Color.BLUE.getRGB());
+                case "CYAN" -> "0x" + Integer.toHexString(Color.CYAN.getRGB());
+                case "DARK_GRAY" -> "0x" + Integer.toHexString(Color.DARK_GRAY.getRGB());
+                case "GRAY" -> "0x" + Integer.toHexString(Color.GRAY.getRGB());
+                case "GREEN" -> "0x" + Integer.toHexString(Color.GREEN.getRGB());
+                case "MAGENTA" -> "0x" + Integer.toHexString(Color.MAGENTA.getRGB());
+                case "ORANGE" -> "0x" + Integer.toHexString(Color.ORANGE.getRGB());
+                case "PINK" -> "0x" + Integer.toHexString(Color.PINK.getRGB());
+                case "RED" -> "0x" + Integer.toHexString(Color.RED.getRGB());
+                case "WHITE" -> "0x" + Integer.toHexString(Color.WHITE.getRGB());
+                case "YELLOW" -> "0x" + Integer.toHexString(Color.YELLOW.getRGB());
+                case "LIGHT_GRAY" -> "0x" + Integer.toHexString(Color.LIGHT_GRAY.getRGB());
+                default -> throw new CodeGenException("Invalid ConstExpr");
+            };
+            javaCode.append(hex);
+        }
+        return javaCode.toString();
     }
 }
