@@ -60,6 +60,75 @@ public class CodeGenVisitor implements ASTVisitor {
             binaryExpr.getRightExpr().visit(this, arg);
             javaCode.append(")))");
         }
+
+        else if (binaryExpr.getLeftExpr().getType() == Type.IMAGE && binaryExpr.getRightExpr().getType() == Type.IMAGE)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryImageImageOp(ImageOps.OP.");
+            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else if (binaryExpr.getLeftExpr().getType() == Type.IMAGE && binaryExpr.getRightExpr().getType() == Type.PIXEL)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryImagePixelOp(ImageOps.OP.");
+            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else if (binaryExpr.getLeftExpr().getType() == Type.IMAGE && binaryExpr.getRightExpr().getType() == Type.INT)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.");
+            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else if (binaryExpr.getLeftExpr().getType() == Type.PIXEL && binaryExpr.getRightExpr().getType() == Type.PIXEL
+                && binaryExpr.getOpKind() == Kind.EQ)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryPackedPixelBooleanOP(ImageOps.OP.");
+            javaCode.append("EQUALS");
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else if (binaryExpr.getLeftExpr().getType() == Type.PIXEL && binaryExpr.getRightExpr().getType() == Type.PIXEL)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryPackedPixelPixelOP(ImageOps.OP.");
+            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+        else if (binaryExpr.getLeftExpr().getType() == Type.PIXEL && binaryExpr.getRightExpr().getType() == Type.INT)
+        {
+            importImageOps = true;
+            javaCode.append("(ImageOps.binaryPackedPixelIntOp(ImageOps.OP.");
+            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append(", ");
+            binaryExpr.getLeftExpr().visit(this, arg);
+            javaCode.append(", ");
+            binaryExpr.getRightExpr().visit(this, arg);
+            javaCode.append("))");
+        }
+
         else {
             javaCode.append("(");
             binaryExpr.getLeftExpr().visit(this, arg);
@@ -130,11 +199,13 @@ public class CodeGenVisitor implements ASTVisitor {
             }
         }
         else {
+            javaCode.append("final ");
+            declaration.getNameDef().visit(this, arg);
+            javaCode.append(" = ");
+
             if (declaration.getInitializer() == null) {
-                javaCode.append("final ");
-                declaration.getNameDef().visit(this, arg);
                 importImageOps = true;
-                javaCode.append(" = ImageOps.makeImage(");
+                javaCode.append("ImageOps.makeImage(");
                 if (declaration.getNameDef().getDimension() != null) {
                     declaration.getNameDef().getDimension().visit(this, arg);
                     javaCode.append(")");
@@ -143,8 +214,6 @@ public class CodeGenVisitor implements ASTVisitor {
                 }
             }
             else {
-                declaration.getNameDef().visit(this, arg);
-
                 if (declaration.getInitializer().getType() == Type.STRING) {
                     importFileURLIO = true;
                     javaCode.append("FileURLIO.readImage(");
@@ -439,27 +508,53 @@ public class CodeGenVisitor implements ASTVisitor {
         0xff0000ff
          */
 
-        if (constExpr.getName() == "Z") {
+        if (constExpr.getName().equals("Z")) {
             javaCode.append("255");
         }
-        else { //BLACK | BLUE | CYAN | DARK_GRAY | GRAY | GREEN | LIGHT_GRAY | MAGENTA | ORANGE | PINK | RED | WHITE | YELLOW
-            String hex = switch (constExpr.getName()) {
-                case "BLACK" -> "0x" + Integer.toHexString(Color.BLACK.getRGB());
-                case "BLUE" -> "0x" + Integer.toHexString(Color.BLUE.getRGB());
-                case "CYAN" -> "0x" + Integer.toHexString(Color.CYAN.getRGB());
-                case "DARK_GRAY" -> "0x" + Integer.toHexString(Color.DARK_GRAY.getRGB());
-                case "GRAY" -> "0x" + Integer.toHexString(Color.GRAY.getRGB());
-                case "GREEN" -> "0x" + Integer.toHexString(Color.GREEN.getRGB());
-                case "MAGENTA" -> "0x" + Integer.toHexString(Color.MAGENTA.getRGB());
-                case "ORANGE" -> "0x" + Integer.toHexString(Color.ORANGE.getRGB());
-                case "PINK" -> "0x" + Integer.toHexString(Color.PINK.getRGB());
-                case "RED" -> "0x" + Integer.toHexString(Color.RED.getRGB());
-                case "WHITE" -> "0x" + Integer.toHexString(Color.WHITE.getRGB());
-                case "YELLOW" -> "0x" + Integer.toHexString(Color.YELLOW.getRGB());
-                case "LIGHT_GRAY" -> "0x" + Integer.toHexString(Color.LIGHT_GRAY.getRGB());
-                default -> throw new CodeGenException("Invalid ConstExpr");
-            };
-            javaCode.append(hex);
+        else {
+            javaCode.append("0x");
+            if (constExpr.getName().equals("BLACK")) {
+               javaCode.append(Integer.toHexString(Color.BLACK.getRGB()));
+            }
+            else if (constExpr.getName().equals("BLUE")) {
+                javaCode.append(Integer.toHexString(Color.BLUE.getRGB()));
+            }
+            else if (constExpr.getName().equals("CYAN")) {
+                javaCode.append(Integer.toHexString(Color.CYAN.getRGB()));
+            }
+            else if (constExpr.getName().equals("DARK_GRAY")) {
+                javaCode.append(Integer.toHexString(Color.DARK_GRAY.getRGB()));
+            }
+            else if (constExpr.getName().equals("GRAY")) {
+                javaCode.append(Integer.toHexString(Color.GRAY.getRGB()));
+            }
+            else if (constExpr.getName().equals("GREEN")) {
+                javaCode.append(Integer.toHexString(Color.GREEN.getRGB()));
+            }
+            else if (constExpr.getName().equals("LIGHT_GRAY")) {
+                javaCode.append(Integer.toHexString(Color.LIGHT_GRAY.getRGB()));
+            }
+            else if (constExpr.getName().equals("MAGENTA")) {
+                javaCode.append(Integer.toHexString(Color.MAGENTA.getRGB()));
+            }
+            else if (constExpr.getName().equals("ORANGE")) {
+                javaCode.append(Integer.toHexString(Color.ORANGE.getRGB()));
+            }
+            else if (constExpr.getName().equals("PINK")) {
+                javaCode.append(Integer.toHexString(Color.PINK.getRGB()));
+            }
+            else if (constExpr.getName().equals("RED")) {
+                javaCode.append(Integer.toHexString(Color.RED.getRGB()));
+            }
+            else if (constExpr.getName().equals("WHITE")) {
+                javaCode.append(Integer.toHexString(Color.WHITE.getRGB()));
+            }
+            else if (constExpr.getName().equals("YELLOW")) {
+                javaCode.append(Integer.toHexString(Color.YELLOW.getRGB()));
+            }
+            else {
+                throw new CodeGenException("Invalid ConstExpr");
+            }
         }
         return javaCode.toString();
     }
