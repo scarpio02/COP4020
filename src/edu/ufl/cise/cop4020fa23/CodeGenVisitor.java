@@ -11,9 +11,17 @@ public class CodeGenVisitor implements ASTVisitor {
     StringBuilder javaCode;
 
     boolean importConsoleIO;
+    boolean importFileURLIO;
+    boolean importImageOps;
+    boolean importPixelOps;
+    boolean importPLCRuntimeException;
     public CodeGenVisitor() {
         javaCode = new StringBuilder();
         importConsoleIO = false;
+        importFileURLIO = false;
+        importImageOps = false;
+        importPixelOps = false;
+        importPLCRuntimeException = false;
     }
 
     @Override
@@ -111,20 +119,71 @@ public class CodeGenVisitor implements ASTVisitor {
 //        Declaration::= NameDef _NameDef_
 //        Declaration::= NameDef Expr _NameDef_ = _Expr_
 
-        declaration.getNameDef().visit(this, arg);
-        if (declaration.getInitializer() != null) {
-            javaCode.append(" = ");
-            declaration.getInitializer().visit(this, arg);
-        }
+        if (declaration.getNameDef().getType() != Type.IMAGE) {
+            declaration.getNameDef().visit(this, arg);
 
+            if (declaration.getInitializer() != null) {
+                javaCode.append(" = ");
+                declaration.getInitializer().visit(this, arg);
+            }
+        }
+        else {
+            if (declaration.getInitializer() == null) {
+                javaCode.append("final ");
+                declaration.getNameDef().visit(this, arg);
+                importImageOps = true;
+                javaCode.append(" = ImageOps.makeImage(");
+                if (declaration.getNameDef().getDimension() != null) {
+                    declaration.getNameDef().getDimension().visit(this, arg);
+                    javaCode.append(")");
+                } else {
+                    throw new CodeGenException("Missing Dimension object in image NameDef");
+                }
+            }
+            else {
+                declaration.getNameDef().visit(this, arg);
+
+                if (declaration.getInitializer().getType() == Type.STRING) {
+                    importFileURLIO = true;
+                    javaCode.append("FileURLIO.readImage(");
+                    declaration.getInitializer().visit(this, arg);
+                    if (declaration.getNameDef().getDimension() != null) {
+                        javaCode.append(", ");
+                        declaration.getNameDef().getDimension().visit(this, arg);
+                    }
+                    javaCode.append(")");
+                }
+                else if (declaration.getInitializer().getType() == Type.IMAGE) {
+                    importImageOps = true;
+                    if (declaration.getNameDef().getDimension() == null) {
+                        javaCode.append("ImageOps.cloneImage(");
+                        declaration.getInitializer().visit(this, arg);
+                        javaCode.append(")");
+                    }
+                    else {
+                        javaCode.append("ImageOps.copyAndResize(");
+                        declaration.getInitializer().visit(this, arg);
+                        javaCode.append(", ");
+                        declaration.getNameDef().getDimension().visit(this, arg);
+                        javaCode.append(")");
+                    }
+                }
+
+            }
+        }
 
         return javaCode.toString();
     }
 
     @Override
     public Object visitDimension(Dimension dimension, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitDimension not implemented in CodeGenVisitor");
-        //return null;
+        // Dimension ::= Exprwidth Exprheight __Exprwidth__ , __Exprheight __
+
+        dimension.getWidth().visit(this, arg);
+        javaCode.append(" , ");
+        dimension.getHeight().visit(this, arg);
+
+        return javaCode.toString();
     }
 
     @Override
@@ -135,8 +194,18 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitExpandedPixelExpr(ExpandedPixelExpr expandedPixelExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitExpandedPixelExpr not implemented in CodeGenVisitor");
-        //return null;
+        // ExpandedPixelExpr ::= Exprred Exprgreen Exprblue PixelOps.pack(_Exprred_, _Exprgreen_, _Exprblue_)
+
+        importPixelOps = true;
+        javaCode.append("PixelOps.pack(");
+        expandedPixelExpr.getRed().visit(this, arg);
+        javaCode.append(", ");
+        expandedPixelExpr.getGreen().visit(this, arg);
+        javaCode.append(", ");
+        expandedPixelExpr.getBlue().visit(this, arg);
+        javaCode.append(")");
+
+        return javaCode.toString();
     }
 
     @Override
@@ -178,10 +247,18 @@ public class CodeGenVisitor implements ASTVisitor {
         if (type == Type.STRING) {
             javaCode.append("String");
         }
+        else if (type == Type.IMAGE) {
+            javaCode.append("BufferedImage");
+        }
+        else if (type == Type.PIXEL) {
+            javaCode.append("int");
+        }
         else {
             javaCode.append(type.toString().toLowerCase());
         }
-        javaCode.append(" ").append(nameDef.getJavaName());
+        javaCode.append(" ");
+
+        javaCode.append(nameDef.getJavaName());
 
         return javaCode.toString();
     }
@@ -197,8 +274,13 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPixelSelector(PixelSelector pixelSelector, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitPixelSelector not implemented in CodeGenVisitor");
-        //return null;
+        // PixelSelector ::= ExprxExpr ExpryExpr __ExprxExpr__ , __ExpryExpr__
+
+        pixelSelector.xExpr().visit(this, arg);
+        javaCode.append(" , ");
+        pixelSelector.yExpr().visit(this, arg);
+
+        return javaCode.toString();
     }
 
     @Override
@@ -293,7 +375,12 @@ public class CodeGenVisitor implements ASTVisitor {
         //javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;\n");
 
         importConsoleIO = true;
-        javaCode.append("ConsoleIO.write(");
+        if (writeStatement.getExpr().getType() == Type.PIXEL) {
+            javaCode.append("ConsoleIO.writePixel(");
+        }
+        else {
+            javaCode.append("ConsoleIO.write(");
+        }
         writeStatement.getExpr().visit(this, arg);
         javaCode.append(")");
 

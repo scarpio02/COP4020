@@ -132,10 +132,13 @@ class CodeGenTest_Hw5_starter {
 
 	/*
 	 * 
-	 * package edu.ufl.cise.cop4020fa23; import
-	 * edu.ufl.cise.cop4020fa23.runtime.ImageOps; public class PixelSum{ public
-	 * static int apply(){ int p0$2=0xff0000ff; int p1$2=0xff00ff00; return
-	 * (ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS,p0$2,p1$2)); } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+	 * public class PixelSum{
+	 * public static int apply(){
+	 * int p0$2=0xff0000ff;
+	 * int p1$2=0xff00ff00;
+	 * return (ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.PLUS,p0$2,p1$2)); } }
 	 */
 	@Test
 	void hw5_4() throws Exception {
@@ -286,8 +289,9 @@ class CodeGenTest_Hw5_starter {
 	 * package edu.ufl.cise.cop4020fa23; import java.awt.image.BufferedImage; import
 	 * edu.ufl.cise.cop4020fa23.runtime.ImageOps; import
 	 * edu.ufl.cise.cop4020fa23.runtime.FileURLIO; public class f{ public static
-	 * BufferedImage apply(String url$1){ BufferedImage
-	 * i$2=FileURLIO.readImage(url$1); return i$2; } }
+	 * BufferedImage apply(String url$1){
+	 * BufferedImage i$2=FileURLIO.readImage(url$1);
+	 * return i$2; } }
 	 */
 	@Test
 	void hw5_10() throws Exception {
@@ -309,8 +313,9 @@ class CodeGenTest_Hw5_starter {
 	 * package edu.ufl.cise.cop4020fa23; import java.awt.image.BufferedImage; import
 	 * edu.ufl.cise.cop4020fa23.runtime.ImageOps; import
 	 * edu.ufl.cise.cop4020fa23.runtime.FileURLIO; public class f{ public static
-	 * BufferedImage apply(String url$1){ BufferedImage
-	 * i$2=FileURLIO.readImage(url$1); BufferedImage j$2=ImageOps.cloneImage(i$2); ;
+	 * BufferedImage apply(String url$1){
+	 * BufferedImage i$2=FileURLIO.readImage(url$1);
+	 * BufferedImage j$2=ImageOps.cloneImage(i$2); ;
 	 * return j$2; } }
 	 * 
 	 */
@@ -335,9 +340,10 @@ class CodeGenTest_Hw5_starter {
 	 * package edu.ufl.cise.cop4020fa23; import java.awt.image.BufferedImage; import
 	 * edu.ufl.cise.cop4020fa23.runtime.ImageOps; import
 	 * edu.ufl.cise.cop4020fa23.runtime.FileURLIO; public class f{ public static
-	 * BufferedImage apply(String url$1){ BufferedImage
-	 * i$2=FileURLIO.readImage(url$1); BufferedImage
-	 * j$2=ImageOps.copyAndResize(i$2,50,100); ; return j$2; } }
+	 * BufferedImage apply(String url$1){
+	 * BufferedImage i$2=FileURLIO.readImage(url$1);
+	 * BufferedImage j$2=ImageOps.copyAndResize(i$2,50,100); ;
+	 * return j$2; } }
 	 */
 	@Test
 	void hw5_12() throws Exception {
