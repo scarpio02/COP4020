@@ -447,6 +447,12 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("-");
         }
         unaryExpr.getExpr().visit(this, arg);
+        if (op == Kind.RES_height) {
+            javaCode.append(".getHeight()");
+        }
+        else if (op == Kind.RES_width) {
+            javaCode.append(".getWidth()");
+        }
         javaCode.append(")");
 
         return javaCode.toString();
