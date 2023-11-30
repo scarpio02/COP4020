@@ -4,6 +4,7 @@ import edu.ufl.cise.cop4020fa23.ast.*;
 import edu.ufl.cise.cop4020fa23.ast.Dimension;
 import edu.ufl.cise.cop4020fa23.exceptions.PLCCompilerException;
 import edu.ufl.cise.cop4020fa23.exceptions.CodeGenException;
+import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
 
 import java.awt.*;
 import java.util.List;
@@ -17,6 +18,7 @@ public class CodeGenVisitor implements ASTVisitor {
     boolean importImageOps;
     boolean importPixelOps;
     boolean importPLCRuntimeException;
+    boolean importBufferedImage;
     public CodeGenVisitor() {
         javaCode = new StringBuilder();
         importConsoleIO = false;
@@ -24,15 +26,84 @@ public class CodeGenVisitor implements ASTVisitor {
         importImageOps = false;
         importPixelOps = false;
         importPLCRuntimeException = false;
+        importBufferedImage = false;
     }
 
     @Override
     public Object visitAssignmentStatement(AssignmentStatement assignmentStatement, Object arg) throws PLCCompilerException {
-//        _LValue_ = _Expr_
+        if (assignmentStatement.getlValue().getVarType() == Type.IMAGE) {
+            if (assignmentStatement.getlValue().getPixelSelector() == null && assignmentStatement.getlValue().getChannelSelector() == null) {
+                importImageOps = true;
+                if (assignmentStatement.getE().getType() == Type.IMAGE) {
+                    javaCode.append("ImageOps.copyInto(");
+                    assignmentStatement.getE().visit(this, arg);
+                    javaCode.append(", ");
+                    assignmentStatement.getlValue().visit(this, arg);
+                    javaCode.append(")");
+                }
+                else if (assignmentStatement.getE().getType() == Type.PIXEL) {
+                    javaCode.append("ImageOps.setAllPixels(");
+                    assignmentStatement.getlValue().visit(this, arg);
+                    javaCode.append(", ");
+                    assignmentStatement.getE().visit(this, arg);
+                    javaCode.append(")");
+                }
+                else if (assignmentStatement.getE().getType() == Type.STRING) {
+                    importFileURLIO = true;
+                    javaCode.append("ImageOps.copyInto(FileURLIO.readImage(");
+                    assignmentStatement.getE().visit(this, arg);
+                    javaCode.append("), ");
+                    assignmentStatement.getlValue().visit(this, arg);
+                    javaCode.append(")");
+                }
+            }
+            else if (assignmentStatement.getlValue().getChannelSelector() != null) {
+                throw new UnsupportedOperationException("AssignState's lVal's channelSelector was not null");
+            }
+            else if (assignmentStatement.getlValue().getPixelSelector() != null && assignmentStatement.getlValue().getChannelSelector() == null) {
+//                if (assignmentStatement.getlValue().getPixelSelector().xExpr() instanceof SyntheticNameDef) {
+//                    javaCode.append("for (int ");
+//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+//                    javaCode.append("= 0; ");
+//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+//                    javaCode.append(" < ");
+//                    assignmentStatement.getlValue().visit(this, arg);
+//                    javaCode.append(".getWidth(); ");
+//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+//                    javaCode.append("++) {\n");
+//                }
+//                if (assignmentStatement.getlValue().getPixelSelector().yExpr() instanceof SyntheticNameDef) {
+//                    javaCode.append("for (int ");
+//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+//                    javaCode.append("= 0; ");
+//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+//                    javaCode.append(" < ");
+//                    assignmentStatement.getlValue().visit(this, arg);
+//                    javaCode.append(".getHeight(); ");
+//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+//                    javaCode.append("++) {\n");
+//                }
+                //FIXME: I don't get this :/
 
-        assignmentStatement.getlValue().visit(this, arg);
-        javaCode.append(" = ");
-        assignmentStatement.getE().visit(this, arg);
+            }
+
+        }
+        else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getlValue().getChannelSelector() != null) {
+            importPixelOps = true;
+            //FIXME: determine which set___
+            javaCode.append("PixelOps.setRed(");
+            assignmentStatement.getlValue().visit(this, arg);
+            javaCode.append(", ");
+            assignmentStatement.getE().visit(this, arg);
+            javaCode.append(")");
+        }
+
+        else {
+            // _LValue_ = _Expr_
+            assignmentStatement.getlValue().visit(this, arg);
+            javaCode.append(" = ");
+            assignmentStatement.getE().visit(this, arg);
+        }
 
         return javaCode.toString();
     }
@@ -65,7 +136,21 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             importImageOps = true;
             javaCode.append("(ImageOps.binaryImageImageOp(ImageOps.OP.");
-            javaCode.append(binaryExpr.getOp().toString());
+            if (binaryExpr.getOpKind() == Kind.PLUS) {
+                javaCode.append("PLUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MINUS) {
+                javaCode.append("MINUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.TIMES) {
+                javaCode.append("TIMES");
+            }
+            else if (binaryExpr.getOpKind() == Kind.DIV) {
+                javaCode.append("DIV");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MOD) {
+                javaCode.append("MOD");
+            }
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(", ");
@@ -76,7 +161,21 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             importImageOps = true;
             javaCode.append("(ImageOps.binaryImagePixelOp(ImageOps.OP.");
-            javaCode.append(binaryExpr.getOp().toString());
+            if (binaryExpr.getOpKind() == Kind.PLUS) {
+                javaCode.append("PLUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MINUS) {
+                javaCode.append("MINUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.TIMES) {
+                javaCode.append("TIMES");
+            }
+            else if (binaryExpr.getOpKind() == Kind.DIV) {
+                javaCode.append("DIV");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MOD) {
+                javaCode.append("MOD");
+            }
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(", ");
@@ -87,7 +186,21 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             importImageOps = true;
             javaCode.append("(ImageOps.binaryImageScalarOp(ImageOps.OP.");
-            javaCode.append(binaryExpr.getOp().toString());
+            if (binaryExpr.getOpKind() == Kind.PLUS) {
+                javaCode.append("PLUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MINUS) {
+                javaCode.append("MINUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.TIMES) {
+                javaCode.append("TIMES");
+            }
+            else if (binaryExpr.getOpKind() == Kind.DIV) {
+                javaCode.append("DIV");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MOD) {
+                javaCode.append("MOD");
+            }
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(", ");
@@ -109,8 +222,22 @@ public class CodeGenVisitor implements ASTVisitor {
         else if (binaryExpr.getLeftExpr().getType() == Type.PIXEL && binaryExpr.getRightExpr().getType() == Type.PIXEL)
         {
             importImageOps = true;
-            javaCode.append("(ImageOps.binaryPackedPixelPixelOP(ImageOps.OP.");
-            javaCode.append(binaryExpr.getOp().toString());
+            javaCode.append("(ImageOps.binaryPackedPixelPixelOp(ImageOps.OP.");
+            if (binaryExpr.getOpKind() == Kind.PLUS) {
+                javaCode.append("PLUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MINUS) {
+                javaCode.append("MINUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.TIMES) {
+                javaCode.append("TIMES");
+            }
+            else if (binaryExpr.getOpKind() == Kind.DIV) {
+                javaCode.append("DIV");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MOD) {
+                javaCode.append("MOD");
+            }
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(", ");
@@ -121,7 +248,21 @@ public class CodeGenVisitor implements ASTVisitor {
         {
             importImageOps = true;
             javaCode.append("(ImageOps.binaryPackedPixelIntOp(ImageOps.OP.");
-            javaCode.append(binaryExpr.getOp().toString());
+            if (binaryExpr.getOpKind() == Kind.PLUS) {
+                javaCode.append("PLUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MINUS) {
+                javaCode.append("MINUS");
+            }
+            else if (binaryExpr.getOpKind() == Kind.TIMES) {
+                javaCode.append("TIMES");
+            }
+            else if (binaryExpr.getOpKind() == Kind.DIV) {
+                javaCode.append("DIV");
+            }
+            else if (binaryExpr.getOpKind() == Kind.MOD) {
+                javaCode.append("MOD");
+            }
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
             javaCode.append(", ");
@@ -319,6 +460,7 @@ public class CodeGenVisitor implements ASTVisitor {
             javaCode.append("String");
         }
         else if (type == Type.IMAGE) {
+            importBufferedImage = true;
             javaCode.append("BufferedImage");
         }
         else if (type == Type.PIXEL) {
@@ -356,8 +498,61 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitPostfixExpr(PostfixExpr postfixExpr, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitPostfixExpr not implemented in CodeGenVisitor");
-        //return null;
+
+//        If Expr.type is Pixel
+//        _ChannelSelector_ ( _Expr_ )
+        if (postfixExpr.primary().getType() == Type.PIXEL) {
+            postfixExpr.channel().visit(this, arg);
+            javaCode.append("(");
+            postfixExpr.primary().visit(this, arg);
+            javaCode.append(")");
+        }
+
+//        Otherwise it is an image
+//        If PixelSelector != null && ChannelSelector ==null
+//        Generate code to get the value of the pixel at the
+//        indicated location.
+//        ImageOps.getRGB( _Expr_ , _PixelSelector _ )
+        else {
+            importImageOps = true;
+            if (postfixExpr.pixel() != null && postfixExpr.channel() == null) {
+                javaCode.append("ImageOps.getRGB(");
+                postfixExpr.primary().visit(this, arg);
+                javaCode.append(", ");
+                postfixExpr.pixel().visit(this, arg);
+                javaCode.append(")");
+            }
+
+//        If PixelSelector != null && ChannelSelector != null,
+//        generate code to get the value of the pixel at the
+//        indicated location and to invoke PixelOps.red,
+//        PixelOps.green, or PixelOps.blue. (You may want
+//        to visit the ChannelSelector, passing info that this is
+//        in the context of an expression as indicated here, or
+//        you may want to just get the value from
+//        visitPostfixExpr)
+//        _ChannelSelector_ (ImageOps.getRGB( _Expr_ , _PixelSelector_ ))
+            else if (postfixExpr.pixel() != null && postfixExpr.channel() != null) {
+                postfixExpr.channel().visit(this, arg);
+                javaCode.append("(ImageOps.getRGB(");
+                postfixExpr.primary().visit(this, arg);
+                javaCode.append(", ");
+                postfixExpr.pixel().visit(this, arg);
+                javaCode.append("))");
+            }
+
+//        If PixelSelector == null && ChannelSelector != null,
+//        generate code to invoke the
+//        ImageOPs.extractRed,extractGreen, or extractBlue
+//        method to return a new image containing the
+//        indicated color channel.
+//        ImageOps.extractRed( _Expr_ )
+//        (or extractBlue or extractGreen)
+            else if (postfixExpr.pixel() == null && postfixExpr.channel() != null) {
+                //FIXME: Finish this after implementing channelSelector and double check this
+            }
+        }
+        return javaCode.toString();
     }
 
     @Override
@@ -373,6 +568,13 @@ public class CodeGenVisitor implements ASTVisitor {
         Type type = program.getType();
         if (type == Type.STRING) {
             javaCode.append("String");
+        }
+        else if (type == Type.IMAGE) {
+            importBufferedImage = true;
+            javaCode.append("BufferedImage");
+        }
+        else if (type == Type.PIXEL) {
+            javaCode.append("int");
         }
         else {
             javaCode.append(type.toString().toLowerCase());
@@ -408,6 +610,10 @@ public class CodeGenVisitor implements ASTVisitor {
         if (importPLCRuntimeException)
         {
             javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.PLCRuntimeException;\n");
+        }
+        if (importBufferedImage)
+        {
+            javaCode.insert(0, "import java.awt.image.BufferedImage;\n");
         }
         if (arg != null && arg != "")
         {
