@@ -97,7 +97,8 @@ public class CodeGenVisitor implements ASTVisitor {
         }
 
         //FIXME: idk if this was the correct way to handle test case hw5_6
-        else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getE().getType() == Type.INT) {
+        else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getE().getType() == Type.INT
+        && assignmentStatement.getlValue().getChannelSelector() == null) {
             importPixelOps = true;
             assignmentStatement.getlValue().visit(this, arg);
             javaCode.append(" = PixelOps.pack(");
