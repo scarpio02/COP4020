@@ -17,7 +17,6 @@ public class CodeGenVisitor implements ASTVisitor {
     boolean importFileURLIO;
     boolean importImageOps;
     boolean importPixelOps;
-    boolean importPLCRuntimeException;
     boolean importBufferedImage;
     public CodeGenVisitor() {
         javaCode = new StringBuilder();
@@ -25,7 +24,6 @@ public class CodeGenVisitor implements ASTVisitor {
         importFileURLIO = false;
         importImageOps = false;
         importPixelOps = false;
-        importPLCRuntimeException = false;
         importBufferedImage = false;
     }
 
@@ -90,9 +88,22 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getlValue().getChannelSelector() != null) {
             importPixelOps = true;
-            //FIXME: determine which set___
+            //FIXME: determine which "set___"
             javaCode.append("PixelOps.setRed(");
             assignmentStatement.getlValue().visit(this, arg);
+            javaCode.append(", ");
+            assignmentStatement.getE().visit(this, arg);
+            javaCode.append(")");
+        }
+
+        //FIXME: idk if this was the correct way to handle test case hw5_6
+        else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getE().getType() == Type.INT) {
+            importPixelOps = true;
+            assignmentStatement.getlValue().visit(this, arg);
+            javaCode.append(" = PixelOps.pack(");
+            assignmentStatement.getE().visit(this, arg);
+            javaCode.append(", ");
+            assignmentStatement.getE().visit(this, arg);
             javaCode.append(", ");
             assignmentStatement.getE().visit(this, arg);
             javaCode.append(")");
@@ -307,8 +318,24 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitChannelSelector(ChannelSelector channelSelector, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitChannelSelector not implemented in CodeGenVisitor");
-        //return null;
+        if (arg instanceof PostfixExpr) {
+            importPixelOps = true;
+            javaCode.append("PixelOps.");
+            if (channelSelector.color() == Kind.RES_red) {
+                javaCode.append("red");
+            }
+            else if (channelSelector.color() == Kind.RES_green) {
+                javaCode.append("green");
+            }
+            else if (channelSelector.color() == Kind.RES_blue) {
+                javaCode.append("blue");
+            }
+        }
+        else if (arg instanceof LValue)
+        {
+            throw new UnsupportedOperationException("visitChannelSelector called from LValue");
+        }
+        return javaCode.toString();
     }
 
     @Override
@@ -400,8 +427,16 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitDoStatement(DoStatement doStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitDoStatement not implemented in CodeGenVisitor");
-        //return null;
+
+        List<GuardedBlock> gb = doStatement.getGuardedBlocks();
+        javaCode.append("{boolean continue$0= false;\n\t\twhile(!continue$0){\n\t\tcontinue$0=true;\n");
+        for (int i = 0; i < gb.size(); i++) {
+            javaCode.append("if ");
+            gb.get(i).visit(this, doStatement);
+        }
+        javaCode.append("}}");
+
+        return javaCode.toString();
     }
 
     @Override
@@ -422,8 +457,22 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitGuardedBlock(GuardedBlock guardedBlock, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitGuardedBlock not implemented in CodeGenVisitor");
-        //return null;
+
+        if (arg instanceof IfStatement) {
+            javaCode.append("(");
+            guardedBlock.getGuard().visit(this, arg);
+            javaCode.append(")");
+            guardedBlock.getBlock().visit(this, arg);
+        }
+        else if (arg instanceof DoStatement) {
+            javaCode.append("(");
+            guardedBlock.getGuard().visit(this, arg);
+            javaCode.append(") {continue$0 = false;");
+            guardedBlock.getBlock().visit(this, arg);
+            javaCode.append("}");
+        }
+
+        return javaCode.toString();
     }
 
     @Override
@@ -437,8 +486,19 @@ public class CodeGenVisitor implements ASTVisitor {
 
     @Override
     public Object visitIfStatement(IfStatement ifStatement, Object arg) throws PLCCompilerException {
-        throw new UnsupportedOperationException("visitIfStatement not implemented in CodeGenVisitor");
-        //return null;
+        List<GuardedBlock> gb = ifStatement.getGuardedBlocks();
+
+        for (int i = 0; i < gb.size(); i++) {
+            javaCode.append("if ");
+            gb.get(i).visit(this, ifStatement);
+            if (i < gb.size() - 1)
+            {
+                javaCode.append("\nelse ");
+            }
+        }
+
+        //FIXME:FINISH THIS after GaurdedBlock
+        return javaCode.toString();
     }
 
     @Override
@@ -502,7 +562,7 @@ public class CodeGenVisitor implements ASTVisitor {
 //        If Expr.type is Pixel
 //        _ChannelSelector_ ( _Expr_ )
         if (postfixExpr.primary().getType() == Type.PIXEL) {
-            postfixExpr.channel().visit(this, arg);
+            postfixExpr.channel().visit(this, postfixExpr);
             javaCode.append("(");
             postfixExpr.primary().visit(this, arg);
             javaCode.append(")");
@@ -533,12 +593,14 @@ public class CodeGenVisitor implements ASTVisitor {
 //        visitPostfixExpr)
 //        _ChannelSelector_ (ImageOps.getRGB( _Expr_ , _PixelSelector_ ))
             else if (postfixExpr.pixel() != null && postfixExpr.channel() != null) {
-                postfixExpr.channel().visit(this, arg);
-                javaCode.append("(ImageOps.getRGB(");
-                postfixExpr.primary().visit(this, arg);
-                javaCode.append(", ");
-                postfixExpr.pixel().visit(this, arg);
-                javaCode.append("))");
+                //FIXME: double check this!
+                throw new UnsupportedOperationException("postfix with pixel AND channel");
+//                postfixExpr.channel().visit(this, postfixExpr);
+//                javaCode.append("(ImageOps.getRGB(");
+//                postfixExpr.primary().visit(this, arg);
+//                javaCode.append(", ");
+//                postfixExpr.pixel().visit(this, arg);
+//                javaCode.append("))");
             }
 
 //        If PixelSelector == null && ChannelSelector != null,
@@ -549,7 +611,8 @@ public class CodeGenVisitor implements ASTVisitor {
 //        ImageOps.extractRed( _Expr_ )
 //        (or extractBlue or extractGreen)
             else if (postfixExpr.pixel() == null && postfixExpr.channel() != null) {
-                //FIXME: Finish this after implementing channelSelector and double check this
+                //FIXME: Finish this after implementing channelSelector and double check this method
+                throw new UnsupportedOperationException("postfix with channel");
             }
         }
         return javaCode.toString();
@@ -606,10 +669,6 @@ public class CodeGenVisitor implements ASTVisitor {
         if (importPixelOps)
         {
             javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.PixelOps;\n");
-        }
-        if (importPLCRuntimeException)
-        {
-            javaCode.insert(0, "import edu.ufl.cise.cop4020fa23.runtime.PLCRuntimeException;\n");
         }
         if (importBufferedImage)
         {

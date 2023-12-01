@@ -190,10 +190,10 @@ class CodeGenTest_Hw5_starter {
 	/**
 	 * 
 	 * 
-	 * package edu.ufl.cise.cop4020fa23; import
-	 * edu.ufl.cise.cop4020fa23.runtime.PixelOps;
-	 * public class f{ public static int
-	 * apply(int a$1){
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+	 * public class f{
+	 * public static int apply(int a$1){
 	 * int b$2;
 	 * b$2=PixelOps.pack(a$1,a$1,a$1);
 	 * return b$2; } }
@@ -216,10 +216,15 @@ class CodeGenTest_Hw5_starter {
 	}
 
 	/**
-	 * package edu.ufl.cise.cop4020fa23; import
-	 * edu.ufl.cise.cop4020fa23.runtime.PixelOps; public class f{ public static int
-	 * apply(int a$1){ int b$2; b$2=PixelOps.pack(PixelOps.red(a$1),255,255); return
-	 * b$2; } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+	 * public class f{
+	 * public static int apply(int a$1){
+	 * int b$2;
+	 * b$2=PixelOps.pack(PixelOps.red(a$1),255,255);
+	 * return b$2;
+	 * }
+	 * }
 	 */
 	@Test
 	void hw5_7() throws Exception {
@@ -367,12 +372,16 @@ class CodeGenTest_Hw5_starter {
 	}
 
 	/**
-	 * package edu.ufl.cise.cop4020fa23; import
-	 * edu.ufl.cise.cop4020fa23.runtime.PixelOps; import
-	 * edu.ufl.cise.cop4020fa23.runtime.ConsoleIO; public class f{ public static int
-	 * apply(){ int p$2=0xffff00ff; ConsoleIO.writePixel(p$2);
-	 * ConsoleIO.write(PixelOps.red(p$2)); ConsoleIO.write(PixelOps.green(p$2));
-	 * ConsoleIO.write(PixelOps.blue(p$2)); return PixelOps.blue(p$2); } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+	 * import edu.ufl.cise.cop4020fa23.runtime.ConsoleIO;
+	 * public class f{ public static int apply(){
+	 * int p$2=0xffff00ff;
+	 * ConsoleIO.writePixel(p$2);
+	 * ConsoleIO.write(PixelOps.red(p$2));
+	 * ConsoleIO.write(PixelOps.green(p$2));
+	 * ConsoleIO.write(PixelOps.blue(p$2));
+	 * return PixelOps.blue(p$2); } }
 	 * 
 	 * Expected output:
 	 * 
@@ -398,8 +407,16 @@ class CodeGenTest_Hw5_starter {
 
 	/**
 	 *
-	 * package edu.ufl.cise.cop4020fa23; public class f{ public static int apply(){
-	 * int x$2=3; if(x$2>2){ } else if(true){ x$2=(x$2+1); } ; return x$2; } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * public class f{
+	 * public static int apply(){
+	 * int x$2=3;
+	 * if(x$2>2){
+	 *
+	 * }
+	 * else if(true){
+	 * x$2=(x$2+1);
+	 * } ; return x$2; } }
 	 * 
 	 * @throws Exception
 	 */
@@ -447,10 +464,22 @@ class CodeGenTest_Hw5_starter {
 	}
 
 	/*
-	 * package edu.ufl.cise.cop4020fa23; public class gcd{ public static int
-	 * apply(int a$1, int b$1){ {boolean continue$0= false; while(!continue$0){
-	 * continue$0=true; if(a$1<b$1){ continue$0 = false; { b$1=(b$1-a$1); } }
-	 * if(b$1<a$1){ continue$0 = false; { a$1=(a$1-b$1); } } } }; return a$1; } }
+	 * package edu.ufl.cise.cop4020fa23;
+	 * public class gcd{
+	 * public static int apply(int a$1, int b$1){
+	 * {boolean continue$0= false;
+	 *  while(!continue$0){
+	 *  continue$0=true;
+	 * if(a$1<b$1){
+	 * continue$0 = false;
+	 * { b$1=(b$1-a$1); }
+	 * }
+	 * if(b$1<a$1){
+	 * continue$0 = false;
+	 * { a$1=(a$1-b$1); }
+	 *  }
+	 *  } };
+	 *  return a$1; } }
 	 */
 	@Test
 	void hw5_16() throws Exception {
