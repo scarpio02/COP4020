@@ -136,17 +136,17 @@ return 255;
 
     /*
     package edu.ufl.cise.cop4020fa23;
-import java.awt.image.BufferedImage;
-import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
-import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
-import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
-public class test{
-public static int apply(String s$1, int x$1, int y$1){
-BufferedImage i$2=FileURLIO.readImage(s$1);
-return PixelOps.red(ImageOps.getRGB(i$2,x$1,y$1));
-}
+    import java.awt.image.BufferedImage;
+    import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+    import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+    import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+    public class test{
+    public static int apply(String s$1, int x$1, int y$1){
+    BufferedImage i$2=FileURLIO.readImage(s$1);
+    return PixelOps.red(ImageOps.getRGB(i$2,x$1,y$1));
+    }
 
-}
+    }
      */
     @Test
     void test2() throws Exception {
@@ -165,16 +165,15 @@ return PixelOps.red(ImageOps.getRGB(i$2,x$1,y$1));
 
     /*
     package edu.ufl.cise.cop4020fa23;
-import java.awt.image.BufferedImage;
-import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
-import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
-public class test{
-public static BufferedImage apply(String s$1){
-BufferedImage i$2=FileURLIO.readImage(s$1);
-return ImageOps.extractRed(i$2);
-}
-
-}
+    import java.awt.image.BufferedImage;
+    import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+    import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+    public class test{
+    public static BufferedImage apply(String s$1){
+    BufferedImage i$2=FileURLIO.readImage(s$1);
+    return ImageOps.extractRed(i$2);
+    }
+    }
      */
     @Test
     void test3() throws Exception {
@@ -511,23 +510,22 @@ return i$2;
 
     /*
     package edu.ufl.cise.cop4020fa23;
-import java.awt.image.BufferedImage;
-import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
-import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
-public class test{
-public static BufferedImage apply(){
-int w$2=50;
-int h$2=50;
-final BufferedImage a$2=ImageOps.makeImage(w$2,h$2);
-ImageOps.setAllPixels(a$2,PixelOps.pack(255,0,0));
-final BufferedImage b$2=ImageOps.makeImage(w$2,h$2);
-ImageOps.setAllPixels(b$2,PixelOps.pack(0,255,0));
-BufferedImage result$2=ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS,a$2,b$2)));
-;
-return result$2;
-}
-
-}
+    import java.awt.image.BufferedImage;
+    import edu.ufl.cise.cop4020fa23.runtime.PixelOps;
+    import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+    public class test{
+    public static BufferedImage apply(){
+    int w$2=50;
+    int h$2=50;
+    final BufferedImage a$2=ImageOps.makeImage(w$2,h$2);
+    ImageOps.setAllPixels(a$2,PixelOps.pack(255,0,0));
+    final BufferedImage b$2=ImageOps.makeImage(w$2,h$2);
+    ImageOps.setAllPixels(b$2,PixelOps.pack(0,255,0));
+    BufferedImage result$2=ImageOps.cloneImage((ImageOps.binaryImageImageOp(ImageOps.OP.PLUS,a$2,b$2)));
+    ;
+    return result$2;
+    }
+    }
      */
     @Test
     void test16() throws Exception {

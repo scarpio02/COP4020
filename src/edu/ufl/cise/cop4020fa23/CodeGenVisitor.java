@@ -223,7 +223,7 @@ public class CodeGenVisitor implements ASTVisitor {
                 && binaryExpr.getOpKind() == Kind.EQ)
         {
             importImageOps = true;
-            javaCode.append("(ImageOps.binaryPackedPixelBooleanOP(ImageOps.OP.");
+            javaCode.append("(ImageOps.binaryPackedPixelBooleanOp(ImageOps.BoolOP.");
             javaCode.append("EQUALS");
             javaCode.append(", ");
             binaryExpr.getLeftExpr().visit(this, arg);
@@ -594,14 +594,12 @@ public class CodeGenVisitor implements ASTVisitor {
 //        visitPostfixExpr)
 //        _ChannelSelector_ (ImageOps.getRGB( _Expr_ , _PixelSelector_ ))
             else if (postfixExpr.pixel() != null && postfixExpr.channel() != null) {
-                //FIXME: double check this!
-                throw new UnsupportedOperationException("postfix with pixel AND channel");
-//                postfixExpr.channel().visit(this, postfixExpr);
-//                javaCode.append("(ImageOps.getRGB(");
-//                postfixExpr.primary().visit(this, arg);
-//                javaCode.append(", ");
-//                postfixExpr.pixel().visit(this, arg);
-//                javaCode.append("))");
+                postfixExpr.channel().visit(this, postfixExpr);
+                javaCode.append("(ImageOps.getRGB(");
+                postfixExpr.primary().visit(this, arg);
+                javaCode.append(", ");
+                postfixExpr.pixel().visit(this, arg);
+                javaCode.append("))");
             }
 
 //        If PixelSelector == null && ChannelSelector != null,
@@ -612,8 +610,20 @@ public class CodeGenVisitor implements ASTVisitor {
 //        ImageOps.extractRed( _Expr_ )
 //        (or extractBlue or extractGreen)
             else if (postfixExpr.pixel() == null && postfixExpr.channel() != null) {
-                //FIXME: Finish this after implementing channelSelector and double check this method
-                throw new UnsupportedOperationException("postfix with channel");
+                importImageOps = true;
+                javaCode.append("ImageOps.extract");
+                if (postfixExpr.channel().color() == Kind.RES_red) {
+                    javaCode.append("Red(");
+                }
+                else if (postfixExpr.channel().color() == Kind.RES_green) {
+                    javaCode.append("Green(");
+                }
+                else if (postfixExpr.channel().color() == Kind.RES_blue) {
+                    javaCode.append("Blue(");
+                }
+                postfixExpr.primary().visit(this, arg);
+                javaCode.append(")");
+
             }
         }
         return javaCode.toString();
