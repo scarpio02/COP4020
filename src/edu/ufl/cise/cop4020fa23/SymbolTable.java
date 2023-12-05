@@ -28,6 +28,7 @@ public class SymbolTable {
          next_num = 1;
          scope_stack = new Stack<Integer>();
          symbol_table = new HashMap<String, ArrayList<Entry>>();
+        scope_stack.push(current_num);
     }
     void enterScope() {
         current_num = next_num++;
@@ -36,6 +37,7 @@ public class SymbolTable {
     }
     void leaveScope() {
         current_num = scope_stack.pop();
+        current_num = scope_stack.peek();
     }
 
     void insert(NameDef name) throws TypeCheckException {

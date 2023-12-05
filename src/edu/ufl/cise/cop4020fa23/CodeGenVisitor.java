@@ -87,9 +87,8 @@ public class CodeGenVisitor implements ASTVisitor {
 
         }
         else if (assignmentStatement.getlValue().getVarType() == Type.PIXEL && assignmentStatement.getlValue().getChannelSelector() != null) {
-            importPixelOps = true;
-            //FIXME: determine which "set___"
-            javaCode.append("PixelOps.setRed(");
+            assignmentStatement.getlValue().getChannelSelector().visit(this, assignmentStatement.getlValue());
+            javaCode.append("(");
             assignmentStatement.getlValue().visit(this, arg);
             javaCode.append(", ");
             assignmentStatement.getE().visit(this, arg);
@@ -334,7 +333,17 @@ public class CodeGenVisitor implements ASTVisitor {
         }
         else if (arg instanceof LValue)
         {
-            throw new UnsupportedOperationException("visitChannelSelector called from LValue");
+            importPixelOps = true;
+            javaCode.append("PixelOps.set");
+            if (channelSelector.color() == Kind.RES_red) {
+                javaCode.append("Red");
+            }
+            else if (channelSelector.color() == Kind.RES_green) {
+                javaCode.append("Green");
+            }
+            else if (channelSelector.color() == Kind.RES_blue) {
+                javaCode.append("Blue");
+            }
         }
         return javaCode.toString();
     }

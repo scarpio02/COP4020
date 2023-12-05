@@ -760,22 +760,22 @@ return i$2;
 
     /*
     package edu.ufl.cise.cop4020fa23;
-import java.awt.image.BufferedImage;
-import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
-import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
-public class test{
-public static BufferedImage apply(String url$1){
-BufferedImage i$2=FileURLIO.readImage(url$1,50,50);
-final BufferedImage j$2=ImageOps.makeImage(50,50);
-for (int x$3=0; x$3<j$2.getWidth();x$3++){
-for (int y$3=0; y$3<j$2.getHeight();y$3++){
-ImageOps.setRGB(j$2,x$3,y$3,ImageOps.getRGB(i$2,y$3,x$3));
-}
-};
-return j$2;
-}
+    import java.awt.image.BufferedImage;
+    import edu.ufl.cise.cop4020fa23.runtime.ImageOps;
+    import edu.ufl.cise.cop4020fa23.runtime.FileURLIO;
+    public class test{
+    public static BufferedImage apply(String url$1){
+    BufferedImage i$2=FileURLIO.readImage(url$1,50,50);
+    final BufferedImage j$2=ImageOps.makeImage(50,50);
+    for (int x$3=0; x$3<j$2.getWidth();x$3++){
+    for (int y$3=0; y$3<j$2.getHeight();y$3++){
+    ImageOps.setRGB(j$2,x$3,y$3,ImageOps.getRGB(i$2,y$3,x$3));
+    }
+    };
+    return j$2;
+    }
 
-}
+    }
      */
     @Test
     void test24() throws Exception {
