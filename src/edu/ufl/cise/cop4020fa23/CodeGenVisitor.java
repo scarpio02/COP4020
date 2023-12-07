@@ -59,28 +59,46 @@ public class CodeGenVisitor implements ASTVisitor {
                 throw new UnsupportedOperationException("AssignState's lVal's channelSelector was not null");
             }
             else if (assignmentStatement.getlValue().getPixelSelector() != null && assignmentStatement.getlValue().getChannelSelector() == null) {
-//                if (assignmentStatement.getlValue().getPixelSelector().xExpr() instanceof SyntheticNameDef) {
-//                    javaCode.append("for (int ");
-//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
-//                    javaCode.append("= 0; ");
-//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
-//                    javaCode.append(" < ");
-//                    assignmentStatement.getlValue().visit(this, arg);
-//                    javaCode.append(".getWidth(); ");
-//                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
-//                    javaCode.append("++) {\n");
-//                }
-//                if (assignmentStatement.getlValue().getPixelSelector().yExpr() instanceof SyntheticNameDef) {
-//                    javaCode.append("for (int ");
-//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
-//                    javaCode.append("= 0; ");
-//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
-//                    javaCode.append(" < ");
-//                    assignmentStatement.getlValue().visit(this, arg);
-//                    javaCode.append(".getHeight(); ");
-//                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
-//                    javaCode.append("++) {\n");
-//                }
+                if (((IdentExpr) assignmentStatement.getlValue().getPixelSelector().xExpr()).getNameDef() instanceof SyntheticNameDef) {
+                    javaCode.append("for (int ");
+                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+                    javaCode.append("= 0; ");
+                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+                    javaCode.append(" < ");
+                    assignmentStatement.getlValue().visit(this, arg);
+                    javaCode.append(".getWidth(); ");
+                    assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+                    javaCode.append("++) {\n");
+                }
+                if (((IdentExpr) assignmentStatement.getlValue().getPixelSelector().yExpr()).getNameDef() instanceof SyntheticNameDef) {
+                    javaCode.append("for (int ");
+                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+                    javaCode.append("= 0; ");
+                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+                    javaCode.append(" < ");
+                    assignmentStatement.getlValue().visit(this, arg);
+                    javaCode.append(".getHeight(); ");
+                    assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+                    javaCode.append("++) {\n");
+                }
+                importImageOps = true;
+                javaCode.append("ImageOps.setRGB(");
+                assignmentStatement.getlValue().visit(this, arg);
+                javaCode.append(", ");
+                assignmentStatement.getlValue().getPixelSelector().xExpr().visit(this, arg);
+                javaCode.append(", ");
+                assignmentStatement.getlValue().getPixelSelector().yExpr().visit(this, arg);
+                javaCode.append(", ");
+                assignmentStatement.getE().visit(this, arg);
+                javaCode.append(");\n");
+                if (((IdentExpr) assignmentStatement.getlValue().getPixelSelector().xExpr()).getNameDef() instanceof SyntheticNameDef) {
+                    javaCode.append("}\n");
+                }
+                if (((IdentExpr) assignmentStatement.getlValue().getPixelSelector().yExpr()).getNameDef() instanceof SyntheticNameDef) {
+                    javaCode.append("}\n");
+                }
+
+
                 //FIXME: I don't get this :/
 
             }
